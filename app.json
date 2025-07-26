@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "Voicely",
+    "slug": "Voicely",
+    "version": "1.0.0",
+    "sdkVersion": "50.0.0",
+    "platforms": [
+      "ios",
+      "android"
+    ],
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FFFFFF"
+      },
+      "package": "com.frtcsk.Voicely"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "f183e53c-a566-4785-b41f-b827f1c45136"
+      }
+    },
+    "owner": "frtcsk"
+  }
+}

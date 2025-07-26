@@ -1,0 +1,27 @@
+# Standart exclude'lar
+node_modules/
+.expo/
+.git/
+tmp/
+temp/
+dist/
+build/
+*.log
+*.zip
+*.mp4
+*.psd
+*.mov
+*.aac
+*.tar
+*.gz
+
+# Ek exclude'lar (projenize özel)
+android/
+ios/
+.bundle/
+.env.local
+*.keystore
+*.jks
+*.apk
+*.ipa
+*.backup
