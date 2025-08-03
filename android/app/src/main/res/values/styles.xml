@@ -1,0 +1,11 @@
+<resources>
+  <style name="Theme.App.SplashScreen" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+    <item name="android:windowBackground">@drawable/ic_launcher_background</item>
+  </style>
+  <style name="NormalTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+    <item name="android:windowBackground">@android:color/white</item>
+  </style>
+  <style name="LaunchTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+    <item name="android:windowBackground">@drawable/splashscreen</item>
+  </style>
+</resources>
