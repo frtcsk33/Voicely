@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:flag/flag.dart';
 import '../providers/translator_provider.dart';
 
 class TranslatorScreen extends StatefulWidget {
@@ -179,14 +180,15 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
                       
                       // Favori butonu kısmını kaldır
                       
-                      // Translation Area - daha büyük
+                      // Translation Area - sabit yükseklik
                       Container(
-                        height: MediaQuery.of(context).size.height * 0.75,
+                        height: MediaQuery.of(context).size.height * 0.65,
                         padding: const EdgeInsets.all(20),
                         child: Column(
                           children: [
                             // Source Language Text Area
-                            Expanded(
+                            Container(
+                              height: (MediaQuery.of(context).size.height * 0.65 - 40 - 90) / 2, // (total - padding - button) / 2
                               child: _buildTextArea(
                                 label: _getLanguageName(provider.fromLang, provider.languages),
                                 controller: _inputController,
@@ -198,37 +200,36 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
                               ),
                             ),
                             
-                            // Ses butonu - iki metin kutucuğu arasında
+                            // Ses butonu - metin kutucuğunun altında ortalanmış
                             Container(
-                              margin: const EdgeInsets.symmetric(vertical: 15),
-                              height: 60, // Sabit yükseklik
-                              width: 80, // Sabit genişlik
+                              height: 90,
+                              alignment: Alignment.center,
                               child: Consumer<TranslatorProvider>(
                                 builder: (context, provider, child) {
-                                  return Center(
-                                    child: Container(
-                                      padding: const EdgeInsets.all(8),
-                                      decoration: BoxDecoration(
-                                        color: Colors.blue[50],
-                                        borderRadius: BorderRadius.circular(30),
-                                        border: Border.all(color: Colors.blue[200]!),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.blue.withOpacity(0.3),
-                                            blurRadius: 8,
-                                            offset: const Offset(0, 4),
-                                          ),
-                                        ],
-                                      ),
-                                      child: _buildRecordingButton(() => provider.stopRecording()),
+                                  return Container(
+                                    width: 60,
+                                    height: 60,
+                                    decoration: BoxDecoration(
+                                      color: Colors.blue[50],
+                                      borderRadius: BorderRadius.circular(30),
+                                      border: Border.all(color: Colors.blue[200]!),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.blue.withOpacity(0.3),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ],
                                     ),
+                                    child: _buildRecordingButton(() => provider.stopRecording()),
                                   );
                                 },
                               ),
                             ),
                             
                             // Target Language Text Area
-                            Expanded(
+                            Container(
+                              height: (MediaQuery.of(context).size.height * 0.65 - 40 - 90) / 2, // (total - padding - button) / 2
                               child: _buildTextArea(
                                 label: _getLanguageName(provider.toLang, provider.languages),
                                 controller: _outputController,
@@ -279,9 +280,22 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
                     value: lang['value'],
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: Text(
-                        lang['label']!,
-                        style: const TextStyle(fontSize: 13),
+                      child: Row(
+                        children: [
+                          Flag.fromString(
+                            lang['flag'] ?? 'UN',
+                            height: 16,
+                            width: 24,
+                            borderRadius: 2,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              lang['label']!,
+                              style: const TextStyle(fontSize: 13),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ))
@@ -301,6 +315,7 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
     required Color backgroundColor,
     required Color borderColor,
     bool showActionButtons = false,
+    bool showRecordingButton = false,
   }) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -317,6 +332,7 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
           ),
           const SizedBox(height: 6),
           Container(
+            height: 140, // Sabit yükseklik
             decoration: BoxDecoration(
               color: backgroundColor,
               borderRadius: BorderRadius.circular(12),
@@ -334,9 +350,10 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
                 TextField(
                   controller: controller,
                   onChanged: onChanged,
-                  maxLines: isInput ? 6 : 6,
-                  minLines: isInput ? 6:  6,
+                  maxLines: 6,
+                  minLines: 1,
                   enabled: isInput,
+                  textAlignVertical: TextAlignVertical.top,
                   style: TextStyle(
                     fontSize: 16,
                     color: isInput ? Colors.black87 : Colors.grey[700],
@@ -344,7 +361,7 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
                   decoration: InputDecoration(
                     hintText: isInput ? 'Metni girin...' : 'Çeviri...',
                     border: InputBorder.none,
-                    contentPadding: const EdgeInsets.all(24),
+                    contentPadding: const EdgeInsets.all(16),
                   ),
                 ),
                 // Sağ alt köşede butonlar
@@ -415,7 +432,7 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
               ? Container(
                   decoration: BoxDecoration(
                     color: Colors.red[100],
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(8),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.red.withOpacity(0.3),
@@ -441,7 +458,7 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
               : Container(
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.9),
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(8),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.grey.withOpacity(0.3),

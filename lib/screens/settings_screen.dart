@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:flag/flag.dart';
 import '../providers/translator_provider.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -128,6 +129,12 @@ class SettingsScreen extends StatelessWidget {
                 final isSelected = language['value'] == provider.appLanguage;
                 
                 return ListTile(
+                  leading: Flag.fromString(
+                    language['flag'] ?? 'UN',
+                    height: 20,
+                    width: 30,
+                    borderRadius: 3,
+                  ),
                   title: Text(
                     language['label']!,
                     style: GoogleFonts.poppins(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:flag/flag.dart';
 import 'dart:io';
 import '../providers/translator_provider.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -386,9 +387,22 @@ class _CameraScreenState extends State<CameraScreen> {
                     value: lang['value'],
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Text(
-                        lang['label']!,
-                        style: const TextStyle(fontSize: 14),
+                      child: Row(
+                        children: [
+                          Flag.fromString(
+                            lang['flag'] ?? 'UN',
+                            height: 18,
+                            width: 28,
+                            borderRadius: 3,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              lang['label']!,
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ))
