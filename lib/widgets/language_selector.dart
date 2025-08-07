@@ -37,6 +37,7 @@ class LanguageSelector extends StatelessWidget {
                   provider.fromLang,
                   'From',
                   true,
+                  provider.sourceLanguages,
                 ),
               ),
               
@@ -44,16 +45,16 @@ class LanguageSelector extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: GestureDetector(
-                  onTap: provider.swapLanguages,
+                  onTap: provider.fromLang != 'auto' ? provider.swapLanguages : null,
                   child: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade100,
+                      color: provider.fromLang != 'auto' ? Colors.grey.shade100 : Colors.grey.shade50,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
                       Icons.swap_horiz_rounded,
-                      color: Colors.grey.shade600,
+                      color: provider.fromLang != 'auto' ? Colors.grey.shade600 : Colors.grey.shade400,
                       size: 20,
                     ),
                   ),
@@ -68,6 +69,7 @@ class LanguageSelector extends StatelessWidget {
                   provider.toLang,
                   'To',
                   false,
+                  provider.targetLanguages,
                 ),
               ),
             ],
@@ -83,11 +85,34 @@ class LanguageSelector extends StatelessWidget {
     String langCode,
     String label,
     bool isFrom,
+    List<Map<String, String>> languages,
   ) {
-    final language = provider.languages.firstWhere(
-      (lang) => lang['value'] == langCode,
-      orElse: () => {'label': 'Unknown', 'value': langCode, 'flag': 'GB'},
-    );
+    // Auto detect durumunda tespit edilen dili göster
+    String displayLangCode = langCode;
+    if (isFrom && langCode == 'auto' && provider.detectedLanguage != null) {
+      displayLangCode = provider.detectedLanguage!;
+    }
+    
+    Map<String, String> language;
+    
+    try {
+      language = languages.firstWhere(
+        (lang) => lang['value'] == displayLangCode,
+      );
+    } catch (e) {
+      // Eğer target languages'da bulunamadıysa source languages'da ara
+      try {
+        language = provider.sourceLanguages.firstWhere(
+          (lang) => lang['value'] == displayLangCode,
+        );
+      } catch (e) {
+        language = {
+          'label': langCode == 'auto' ? 'Auto Detect' : 'Unknown', 
+          'value': displayLangCode, 
+          'flag': langCode == 'auto' ? 'UN' : 'GB'
+        };
+      }
+    }
 
     return GestureDetector(
       onTap: () => _showLanguagePicker(context, provider, isFrom),
@@ -120,14 +145,29 @@ class LanguageSelector extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(
-                    language['label']!,
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey.shade800,
-                    ),
-                    overflow: TextOverflow.ellipsis,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        language['label']!,
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey.shade800,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (isFrom && langCode == 'auto' && provider.detectedLanguage != null)
+                        Text(
+                          'Auto Detected',
+                          style: GoogleFonts.poppins(
+                            fontSize: 10,
+                            color: Colors.blue.shade600,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                    ],
                   ),
                 ),
                 Icon(
@@ -204,9 +244,10 @@ class LanguageSelector extends StatelessWidget {
             Expanded(
               child: ListView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                itemCount: provider.languages.length,
+                itemCount: isFrom ? provider.sourceLanguages.length : provider.targetLanguages.length,
                 itemBuilder: (context, index) {
-                  final language = provider.languages[index];
+                  final languages = isFrom ? provider.sourceLanguages : provider.targetLanguages;
+                  final language = languages[index];
                   final isSelected = (isFrom ? provider.fromLang : provider.toLang) == language['value'];
                   
                   return GestureDetector(

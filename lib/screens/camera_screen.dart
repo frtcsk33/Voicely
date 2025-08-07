@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:flag/flag.dart';
 import 'dart:io';
 import '../providers/translator_provider.dart';
+import 'pro_subscription_screen.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
 class CameraScreen extends StatefulWidget {
@@ -43,18 +44,14 @@ class _CameraScreenState extends State<CameraScreen> {
         foregroundColor: Colors.black87,
         elevation: 0,
         centerTitle: true,
-        actions: [
-          IconButton(
-            onPressed: () {
-              Navigator.pushNamed(context, '/settings');
-            },
-            icon: const Icon(Icons.settings),
-            tooltip: 'Ayarlar',
-          ),
-        ],
       ),
       body: Consumer<TranslatorProvider>(
         builder: (context, provider, child) {
+          // Pro olmayan kullanıcılar için paywall göster
+          if (!provider.isProUser) {
+            return _buildProPaywall(context);
+          }
+          
           return Column(
             children: [
               // Dil seçimi
@@ -708,6 +705,233 @@ class _CameraScreenState extends State<CameraScreen> {
           ],
         );
       },
+    );
+  }
+
+  Widget _buildProPaywall(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Colors.blue[50]!,
+            Colors.white,
+            Colors.purple[50]!,
+          ],
+        ),
+      ),
+      child: SingleChildScrollView(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: MediaQuery.of(context).size.height - 
+                     MediaQuery.of(context).padding.top - 
+                     kToolbarHeight,
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+          // Premium Icon
+          Container(
+            width: 120,
+            height: 120,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.blue[400]!, Colors.purple[400]!],
+              ),
+              borderRadius: BorderRadius.circular(60),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.blue.withOpacity(0.3),
+                  spreadRadius: 2,
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: const Icon(
+              Icons.camera_alt,
+              color: Colors.white,
+              size: 60,
+            ),
+          ),
+          
+          const SizedBox(height: 32),
+          
+          // Title
+          Text(
+            context.read<TranslatorProvider>().getLocalizedText('premium_feature'),
+            style: GoogleFonts.poppins(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey[800],
+            ),
+          ),
+          
+          const SizedBox(height: 16),
+          
+          // Subtitle
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 40),
+            child: Text(
+              context.read<TranslatorProvider>().getLocalizedText('camera_translation_pro_only'),
+              style: GoogleFonts.poppins(
+                fontSize: 16,
+                color: Colors.grey[600],
+                height: 1.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          
+          const SizedBox(height: 40),
+          
+          // Features List
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 40),
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.1),
+                  spreadRadius: 1,
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                _buildFeatureItem(
+                  icon: Icons.camera_alt,
+                  title: context.read<TranslatorProvider>().getLocalizedText('photo_translation'),
+                  description: context.read<TranslatorProvider>().getLocalizedText('translate_photo_text'),
+                ),
+                const SizedBox(height: 16),
+                _buildFeatureItem(
+                  icon: Icons.text_fields,
+                  title: context.read<TranslatorProvider>().getLocalizedText('ocr_technology'),
+                  description: context.read<TranslatorProvider>().getLocalizedText('advanced_text_recognition'),
+                ),
+                const SizedBox(height: 16),
+                _buildFeatureItem(
+                  icon: Icons.language,
+                  title: context.read<TranslatorProvider>().getLocalizedText('multilang_support'),
+                  description: context.read<TranslatorProvider>().getLocalizedText('text_recognition_50_langs'),
+                ),
+              ],
+            ),
+          ),
+          
+          const SizedBox(height: 40),
+          
+          // Upgrade Button
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 40),
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ProSubscriptionScreen(),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue[600],
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 3,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.rocket_launch),
+                  const SizedBox(width: 12),
+                  Text(
+                    context.read<TranslatorProvider>().getLocalizedText('upgrade_to_pro'),
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          
+          const SizedBox(height: 16),
+          
+          // Skip Button
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: Text(
+              context.read<TranslatorProvider>().getLocalizedText('later'),
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                color: Colors.grey[600],
+              ),
+            ),
+          ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFeatureItem({
+    required IconData icon,
+    required String title,
+    required String description,
+  }) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.blue[50],
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            icon,
+            color: Colors.blue[600],
+            size: 20,
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[800],
+                ),
+              ),
+              Text(
+                description,
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 } 

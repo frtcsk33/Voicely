@@ -120,6 +120,20 @@ class AuthService extends ChangeNotifier {
   bool get isAuthenticated => _currentUser != null;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
+  
+  // Additional getters for UI
+  String? get userDisplayName {
+    if (_currentUser == null) return null;
+    if (_currentUser!.userMetadata?['full_name'] != null) {
+      return _currentUser!.userMetadata!['full_name'];
+    }
+    return _currentUser!.email?.split('@').first;
+  }
+  
+  String? get userAvatarUrl {
+    if (_currentUser == null) return null;
+    return _currentUser!.userMetadata?['avatar_url'];
+  }
 
   AuthService() {
     _initialize();
@@ -144,6 +158,10 @@ class AuthService extends ChangeNotifier {
           case AuthChangeEvent.signedIn:
             _currentUser = session?.user;
             _clearError();
+            // Create user profile in public.users table
+            if (_currentUser != null) {
+              _createUserProfile(_currentUser!);
+            }
             break;
           case AuthChangeEvent.signedOut:
             _currentUser = null;
@@ -360,6 +378,49 @@ class AuthService extends ChangeNotifier {
 
   void _clearError() {
     _errorMessage = null;
+  }
+
+  /// Clear error message (public method)
+  void clearError() {
+    _clearError();
+    notifyListeners();
+  }
+
+  /// Create user profile in public.users table
+  Future<void> _createUserProfile(User user) async {
+    try {
+      // Check if user profile already exists
+      final existingProfile = await supabase
+          .from('users')
+          .select('id')
+          .eq('id', user.id)
+          .single();
+      
+      if (existingProfile != null) {
+        // Profile exists, update last_login_at
+        await supabase
+            .from('users')
+            .update({'last_login_at': DateTime.now().toIso8601String()})
+            .eq('id', user.id);
+        return;
+      }
+    } catch (e) {
+      // Profile doesn't exist, create it
+      try {
+        await supabase.from('users').insert({
+          'id': user.id,
+          'email': user.email,
+          'full_name': user.userMetadata?['full_name'] ?? user.email?.split('@').first,
+          'created_at': DateTime.now().toIso8601String(),
+          'updated_at': DateTime.now().toIso8601String(),
+          'last_login_at': DateTime.now().toIso8601String(),
+        });
+      } catch (insertError) {
+        if (kDebugMode) {
+          print('Failed to create user profile: $insertError');
+        }
+      }
+    }
   }
 
   String _getErrorMessage(dynamic error) {

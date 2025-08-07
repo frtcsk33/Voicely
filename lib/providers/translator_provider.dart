@@ -4,6 +4,7 @@ import 'package:speech_to_text/speech_to_text.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:convert';
 import 'dart:async';
 
@@ -16,8 +17,9 @@ class TranslatorProvider with ChangeNotifier {
   
   String _inputText = '';
   String _translatedText = '';
-  String _fromLang = 'tr';
+  String _fromLang = 'auto';
   String _toLang = 'en';
+  String? _detectedLanguage; // Auto detect ile tespit edilen dil
   bool _isRecording = false;
   bool _isAvailable = false;
   bool _isTranslating = false;
@@ -44,20 +46,65 @@ class TranslatorProvider with ChangeNotifier {
   String get translatedText => _translatedText;
   String get fromLang => _fromLang;
   String get toLang => _toLang;
+  String? get detectedLanguage => _detectedLanguage;
   bool get isRecording => _isRecording;
   bool get isAvailable => _isAvailable;
   bool get isTranslating => _isTranslating;
   TextEditingController get textController => _textController;
   List<Map<String, dynamic>> get favorites => _favorites;
-  bool get isCurrentTranslationFavorited => _isCurrentTranslationFavorited;
   List<Map<String, dynamic>> get history => _history;
+  bool get isCurrentTranslationFavorited => _isCurrentTranslationFavorited;
   String get appLanguage => _appLanguage;
   bool get isLoading => _isLoading;
   bool get isProUser => _isProUser;
   bool get useWhisper => _useWhisper;
   String get translationModel => _translationModel;
   
-  List<Map<String, String>> get languages => [
+  List<Map<String, String>> get sourceLanguages => [
+    {'label': 'Auto Detect', 'value': 'auto', 'flag': 'UN'},
+    {'label': 'İngilizce', 'value': 'en', 'flag': 'GB'},
+    {'label': 'Türkçe', 'value': 'tr', 'flag': 'TR'},
+    {'label': 'Almanca', 'value': 'de', 'flag': 'DE'},
+    {'label': 'Fransızca', 'value': 'fr', 'flag': 'FR'},
+    {'label': 'İspanyolca', 'value': 'es', 'flag': 'ES'},
+    {'label': 'İtalyanca', 'value': 'it', 'flag': 'IT'},
+    {'label': 'Portekizce', 'value': 'pt', 'flag': 'PT'},
+    {'label': 'Rusça', 'value': 'ru', 'flag': 'RU'},
+    {'label': 'Japonca', 'value': 'ja', 'flag': 'JP'},
+    {'label': 'Korece', 'value': 'ko', 'flag': 'KR'},
+    {'label': 'Çince (Basitleştirilmiş)', 'value': 'zh', 'flag': 'CN'},
+    {'label': 'Çince (Geleneksel)', 'value': 'zh-tw', 'flag': 'TW'},
+    {'label': 'Arapça', 'value': 'ar', 'flag': 'SA'},
+    {'label': 'Hintçe', 'value': 'hi', 'flag': 'IN'},
+    {'label': 'Bengalce', 'value': 'bn', 'flag': 'BD'},
+    {'label': 'Urduca', 'value': 'ur', 'flag': 'PK'},
+    {'label': 'Farsça', 'value': 'fa', 'flag': 'IR'},
+    {'label': 'Hollandaca', 'value': 'nl', 'flag': 'NL'},
+    {'label': 'İsveççe', 'value': 'sv', 'flag': 'SE'},
+    {'label': 'Norveççe', 'value': 'no', 'flag': 'NO'},
+    {'label': 'Danca', 'value': 'da', 'flag': 'DK'},
+    {'label': 'Fince', 'value': 'fi', 'flag': 'FI'},
+    {'label': 'Lehçe', 'value': 'pl', 'flag': 'PL'},
+    {'label': 'Çekçe', 'value': 'cs', 'flag': 'CZ'},
+    {'label': 'Slovakça', 'value': 'sk', 'flag': 'SK'},
+    {'label': 'Macarca', 'value': 'hu', 'flag': 'HU'},
+    {'label': 'Rumence', 'value': 'ro', 'flag': 'RO'},
+    {'label': 'Bulgarca', 'value': 'bg', 'flag': 'BG'},
+    {'label': 'Hırvatça', 'value': 'hr', 'flag': 'HR'},
+    {'label': 'Sırpça', 'value': 'sr', 'flag': 'RS'},
+    {'label': 'Slovence', 'value': 'sl', 'flag': 'SI'},
+    {'label': 'Litvanyaca', 'value': 'lt', 'flag': 'LT'},
+    {'label': 'Letonca', 'value': 'lv', 'flag': 'LV'},
+    {'label': 'Estonca', 'value': 'et', 'flag': 'EE'},
+    {'label': 'Yunanca', 'value': 'el', 'flag': 'GR'},
+    {'label': 'İbranice', 'value': 'he', 'flag': 'IL'},
+    {'label': 'Tayca', 'value': 'th', 'flag': 'TH'},
+    {'label': 'Vietnamca', 'value': 'vi', 'flag': 'VN'},
+    {'label': 'Endonezce', 'value': 'id', 'flag': 'ID'},
+    {'label': 'Malayca', 'value': 'ms', 'flag': 'MY'},
+  ];
+  
+  List<Map<String, String>> get targetLanguages => [
     {'label': 'İngilizce', 'value': 'en', 'flag': 'GB'},
     {'label': 'Türkçe', 'value': 'tr', 'flag': 'TR'},
     {'label': 'Almanca', 'value': 'de', 'flag': 'DE'},
@@ -203,8 +250,11 @@ class TranslatorProvider with ChangeNotifier {
     {'label': 'Lëtzebuergesch', 'value': 'lb', 'flag': 'LU'},
     {'label': 'Esperanto', 'value': 'eo', 'flag': 'UN'},
     {'label': 'Latina', 'value': 'la', 'flag': 'VA'},
-  ];
-
+    ];
+  
+  // Geriye dönük uyumluluk için
+  List<Map<String, String>> get languages => targetLanguages;
+  
   TranslatorProvider() {
     _initializeSpeech();
   }
@@ -491,6 +541,128 @@ class TranslatorProvider with ChangeNotifier {
         return 'Hata oluştu';
       case 'about_app':
         return 'Uygulama Hakkında';
+      case 'type_message_hint':
+        return 'Mesajınızı buraya yazın veya aşağıdaki mikrofonu kullanın';
+      case 'text_pasted':
+        return 'Metin yapıştırıldı ve çeviri için hazır';
+      case 'no_text_clipboard':
+        return 'Panoda metin bulunamadı';
+      case 'paste':
+        return 'Yapıştır';
+      case 'speak_now':
+        return 'Çeviri için şimdi konuşun';
+      case 'speech_recognition':
+        return 'Ses Tanıma';
+      case 'stop_recording':
+        return 'Kaydı Durdur';
+      case 'ai_pro':
+        return 'AI Pro';
+      case 'translation_copied':
+        return 'Çeviri panoya kopyalandı';
+      case 'switch_to_standard':
+        return 'Standart\'a Geç';
+      case 'switch_to_ai_pro':
+        return 'AI Pro\'ya Geç';
+      case 'voice_translation_app':
+        return 'Sesli Çeviri Uygulaması';
+      case 'sign_in':
+        return 'Giriş Yap';
+      case 'access_account':
+        return 'Hesabınıza erişin';
+      case 'account':
+        return 'Hesap';
+      case 'manage_account':
+        return 'Hesabınızı yönetin';
+      case 'change_interface_language':
+        return 'Arayüz dilini değiştirin';
+      case 'rate_us':
+        return 'Bizi Değerlendirin';
+      case 'rate_on_playstore':
+        return 'Voicely\'yi Play Store\'da değerlendirin';
+      case 'share_app':
+        return 'Uygulamayı Paylaş';
+      case 'share_with_friends':
+        return 'Voicely\'yi arkadaşlarınızla paylaşın';
+      case 'privacy_policy':
+        return 'Gizlilik Politikası';
+      case 'view_privacy_policy':
+        return 'Gizlilik politikamızı görüntüleyin';
+      case 'app_version_info':
+        return 'Uygulama versiyonu ve bilgileri';
+      case 'report_bug':
+        return 'Hata Bildir';
+      case 'report_issues':
+        return 'Sorunları veya geri bildirimleri bildirin';
+      case 'account_options':
+        return 'Hesap Seçenekleri';
+      case 'account_type':
+        return 'Hesap Türü';
+      case 'pro':
+        return 'Pro';
+      case 'free':
+        return 'Ücretsiz';
+      case 'close':
+        return 'Kapat';
+      case 'sign_out':
+        return 'Çıkış Yap';
+      case 'search_languages':
+        return 'Dilleri ara...';
+      case 'language_changed_to':
+        return 'Dil şuna değiştirildi';
+      case 'premium_feature':
+        return 'Premium Özellik';
+      case 'camera_translation_pro_only':
+        return 'Kamera çevirisi özelliği sadece Pro üyeler için kullanılabilir';
+      case 'photo_translation':
+        return 'Fotoğraf Çevirisi';
+      case 'translate_photo_text':
+        return 'Fotoğraftaki metinleri anında çevir';
+      case 'ocr_technology':
+        return 'OCR Teknolojisi';
+      case 'advanced_text_recognition':
+        return 'Gelişmiş metin tanıma sistemi';
+      case 'multilang_support':
+        return 'Çoklu Dil Desteği';
+      case 'text_recognition_50_langs':
+        return '50+ dilde metin tanıma';
+      case 'upgrade_to_pro':
+        return 'Pro\'ya Geçiş Yap';
+      case 'later':
+        return 'Daha Sonra';
+      case 'better_translation':
+        return 'Daha İyi Çeviri';
+      case 'books':
+        return 'Kitaplar';
+      case 'expressions':
+        return 'İfadeler';
+      case 'verbs':
+        return 'Fiiller';
+      case 'basic':
+        return 'Temel';
+      case 'culture':
+        return 'Kültür';
+      case 'travel':
+        return 'Seyahat';
+      case 'technical':
+        return 'Teknik';
+      case 'objects':
+        return 'Nesneler';
+      case 'word_count':
+        return 'kelime';
+      case 'copy':
+        return 'Kopyala';
+      case 'share':
+        return 'Paylaş';
+      case 'word_copied':
+        return 'Kelime kopyalandı';
+      case 'example':
+        return 'Örnek';
+      case 'search_words':
+        return 'Kelimeleri ara...';
+      case 'no_words_found':
+        return 'Kelime bulunamadı';
+      case 'try_different_search':
+        return 'Farklı bir arama deneyin';
       default:
         return key;
     }
@@ -570,6 +742,128 @@ class TranslatorProvider with ChangeNotifier {
         return 'An error occurred';
       case 'about_app':
         return 'About App';
+      case 'type_message_hint':
+        return 'Type your message here or use the microphone below';
+      case 'text_pasted':
+        return 'Text pasted and ready to translate';
+      case 'no_text_clipboard':
+        return 'No text found in clipboard';
+      case 'paste':
+        return 'Paste';
+      case 'speak_now':
+        return 'Speak now for translation';
+      case 'speech_recognition':
+        return 'Speech Recognition';
+      case 'stop_recording':
+        return 'Stop Recording';
+      case 'ai_pro':
+        return 'AI Pro';
+      case 'translation_copied':
+        return 'Translation copied to clipboard';
+      case 'switch_to_standard':
+        return 'Switch to Standard';
+      case 'switch_to_ai_pro':
+        return 'Switch to AI Pro';
+      case 'voice_translation_app':
+        return 'Voice Translation App';
+      case 'sign_in':
+        return 'Sign In';
+      case 'access_account':
+        return 'Access your account';
+      case 'account':
+        return 'Account';
+      case 'manage_account':
+        return 'Manage your account';
+      case 'change_interface_language':
+        return 'Change interface language';
+      case 'rate_us':
+        return 'Rate Us';
+      case 'rate_on_playstore':
+        return 'Rate Voicely on Play Store';
+      case 'share_app':
+        return 'Share App';
+      case 'share_with_friends':
+        return 'Share Voicely with friends';
+      case 'privacy_policy':
+        return 'Privacy Policy';
+      case 'view_privacy_policy':
+        return 'View our privacy policy';
+      case 'app_version_info':
+        return 'App version and info';
+      case 'report_bug':
+        return 'Report Bug';
+      case 'report_issues':
+        return 'Report issues or feedback';
+      case 'account_options':
+        return 'Account Options';
+      case 'account_type':
+        return 'Account Type';
+      case 'pro':
+        return 'Pro';
+      case 'free':
+        return 'Free';
+      case 'close':
+        return 'Close';
+      case 'sign_out':
+        return 'Sign Out';
+      case 'search_languages':
+        return 'Search languages...';
+      case 'language_changed_to':
+        return 'Language changed to';
+      case 'premium_feature':
+        return 'Premium Feature';
+      case 'camera_translation_pro_only':
+        return 'Camera translation feature is only available for Pro members';
+      case 'photo_translation':
+        return 'Photo Translation';
+      case 'translate_photo_text':
+        return 'Instantly translate text in photos';
+      case 'ocr_technology':
+        return 'OCR Technology';
+      case 'advanced_text_recognition':
+        return 'Advanced text recognition system';
+      case 'multilang_support':
+        return 'Multi-language Support';
+      case 'text_recognition_50_langs':
+        return 'Text recognition in 50+ languages';
+      case 'upgrade_to_pro':
+        return 'Upgrade to Pro';
+      case 'later':
+        return 'Later';
+      case 'better_translation':
+        return 'Better Translation';
+      case 'books':
+        return 'Books';
+      case 'expressions':
+        return 'Expressions';
+      case 'verbs':
+        return 'Verbs';
+      case 'basic':
+        return 'Basic';
+      case 'culture':
+        return 'Culture';
+      case 'travel':
+        return 'Travel';
+      case 'technical':
+        return 'Technical';
+      case 'objects':
+        return 'Objects';
+      case 'word_count':
+        return 'words';
+      case 'copy':
+        return 'Copy';
+      case 'share':
+        return 'Share';
+      case 'word_copied':
+        return 'Word copied';
+      case 'example':
+        return 'Example';
+      case 'search_words':
+        return 'Search words...';
+      case 'no_words_found':
+        return 'No words found';
+      case 'try_different_search':
+        return 'Try a different search';
       default:
         return key;
     }
@@ -728,6 +1022,128 @@ class TranslatorProvider with ChangeNotifier {
         return 'Une erreur s\'est produite';
       case 'about_app':
         return 'À propos de l\'application';
+      case 'type_message_hint':
+        return 'Tapez votre message ici ou utilisez le microphone ci-dessous';
+      case 'text_pasted':
+        return 'Texte collé et prêt à traduire';
+      case 'no_text_clipboard':
+        return 'Aucun texte trouvé dans le presse-papiers';
+      case 'paste':
+        return 'Coller';
+      case 'speak_now':
+        return 'Parlez maintenant pour la traduction';
+      case 'speech_recognition':
+        return 'Reconnaissance vocale';
+      case 'stop_recording':
+        return 'Arrêter l\'enregistrement';
+      case 'ai_pro':
+        return 'IA Pro';
+      case 'translation_copied':
+        return 'Traduction copiée dans le presse-papiers';
+      case 'switch_to_standard':
+        return 'Passer au standard';
+      case 'switch_to_ai_pro':
+        return 'Passer à l\'IA Pro';
+      case 'voice_translation_app':
+        return 'Application de traduction vocale';
+      case 'sign_in':
+        return 'Se connecter';
+      case 'access_account':
+        return 'Accédez à votre compte';
+      case 'account':
+        return 'Compte';
+      case 'manage_account':
+        return 'Gérez votre compte';
+      case 'change_interface_language':
+        return 'Changer la langue de l\'interface';
+      case 'rate_us':
+        return 'Évaluez-nous';
+      case 'rate_on_playstore':
+        return 'Évaluez Voicely sur Play Store';
+      case 'share_app':
+        return 'Partager l\'application';
+      case 'share_with_friends':
+        return 'Partagez Voicely avec vos amis';
+      case 'privacy_policy':
+        return 'Politique de confidentialité';
+      case 'view_privacy_policy':
+        return 'Voir notre politique de confidentialité';
+      case 'app_version_info':
+        return 'Version et informations de l\'application';
+      case 'report_bug':
+        return 'Signaler un bug';
+      case 'report_issues':
+        return 'Signaler des problèmes ou des commentaires';
+      case 'account_options':
+        return 'Options du compte';
+      case 'account_type':
+        return 'Type de compte';
+      case 'pro':
+        return 'Pro';
+      case 'free':
+        return 'Gratuit';
+      case 'close':
+        return 'Fermer';
+      case 'sign_out':
+        return 'Se déconnecter';
+      case 'search_languages':
+        return 'Rechercher des langues...';
+      case 'language_changed_to':
+        return 'Langue changée en';
+      case 'premium_feature':
+        return 'Fonctionnalité premium';
+      case 'camera_translation_pro_only':
+        return 'La fonction de traduction par caméra n\'est disponible que pour les membres Pro';
+      case 'photo_translation':
+        return 'Traduction de photos';
+      case 'translate_photo_text':
+        return 'Traduisez instantanément le texte des photos';
+      case 'ocr_technology':
+        return 'Technologie OCR';
+      case 'advanced_text_recognition':
+        return 'Système de reconnaissance de texte avancé';
+      case 'multilang_support':
+        return 'Support multilingue';
+      case 'text_recognition_50_langs':
+        return 'Reconnaissance de texte dans plus de 50 langues';
+      case 'upgrade_to_pro':
+        return 'Passer à Pro';
+      case 'later':
+        return 'Plus tard';
+      case 'better_translation':
+        return 'Meilleure traduction';
+      case 'books':
+        return 'Livres';
+      case 'expressions':
+        return 'Expressions';
+      case 'verbs':
+        return 'Verbes';
+      case 'basic':
+        return 'Basique';
+      case 'culture':
+        return 'Culture';
+      case 'travel':
+        return 'Voyage';
+      case 'technical':
+        return 'Technique';
+      case 'objects':
+        return 'Objets';
+      case 'word_count':
+        return 'mots';
+      case 'copy':
+        return 'Copier';
+      case 'share':
+        return 'Partager';
+      case 'word_copied':
+        return 'Mot copié';
+      case 'example':
+        return 'Exemple';
+      case 'search_words':
+        return 'Rechercher des mots...';
+      case 'no_words_found':
+        return 'Aucun mot trouvé';
+      case 'try_different_search':
+        return 'Essayez une recherche différente';
       default:
         return key;
     }
@@ -1536,6 +1952,9 @@ class TranslatorProvider with ChangeNotifier {
 
   void setFromLang(String lang) {
     _fromLang = lang;
+    if (lang != 'auto') {
+      _detectedLanguage = null; // Auto detect değilse temizle
+    }
     _updateFavoriteStatus();
     
     // Geçmiş debounce timer'ını iptal et
@@ -1601,10 +2020,25 @@ class TranslatorProvider with ChangeNotifier {
     }
     
     _isTranslating = false;
+    
+    // Save translation to Supabase if user is authenticated
+    await _saveTranslationToSupabase();
+    
     notifyListeners();
   }
   
   Future<void> _translateWithStandard(String textToTranslate) async {
+    String sourceLanguage = _fromLang;
+    
+    // Auto detect için dil tespiti yap
+    if (_fromLang == 'auto') {
+      sourceLanguage = await _detectLanguage(textToTranslate);
+      _detectedLanguage = sourceLanguage;
+      notifyListeners(); // UI'ı güncelle
+    } else {
+      _detectedLanguage = null; // Auto detect değilse temizle
+    }
+    
     // LibreTranslate API kullanımı (ücretsiz)
     final response = await http.post(
       Uri.parse('https://libretranslate.de/translate'),
@@ -1613,7 +2047,7 @@ class TranslatorProvider with ChangeNotifier {
       },
       body: json.encode({
         'q': textToTranslate,
-        'source': _fromLang,
+        'source': sourceLanguage,
         'target': _toLang,
         'format': 'text',
       }),
@@ -1697,14 +2131,98 @@ class TranslatorProvider with ChangeNotifier {
     await speak(_translatedText, _toLang);
   }
 
+  /// Basit dil tespiti - gerçek uygulamada Google Translate Detect API kullanılabilir
+  Future<String> _detectLanguage(String text) async {
+    try {
+      // MyMemory API'sı ile dil tespiti
+      final response = await http.get(
+        Uri.parse('https://api.mymemory.translated.net/get')
+            .replace(queryParameters: {
+          'q': text,
+          'langpair': 'auto|en', // Auto detect to English
+        }),
+      );
+      
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        // Eğer matches varsa, ilk match'in source language'ini al
+        if (data['matches'] != null && data['matches'].isNotEmpty) {
+          String? detectedLang = data['matches'][0]['source'];
+          if (detectedLang != null && detectedLang.isNotEmpty) {
+            return detectedLang;
+          }
+        }
+      }
+    } catch (e) {
+      print('Language detection error: $e');
+    }
+    
+    // Fallback: Basit karaktere dayalı tahmin
+    return _guessLanguageFromText(text);
+  }
+  
+  /// Metin karakterlerine dayalı basit dil tahmini
+  String _guessLanguageFromText(String text) {
+    final cleanText = text.toLowerCase();
+    
+    // Türkçe karakterler
+    if (cleanText.contains(RegExp(r'[çğıöşüÇĞIİÖŞÜ]'))) {
+      return 'tr';
+    }
+    
+    // Arapça karakterler
+    if (cleanText.contains(RegExp(r'[\u0600-\u06FF]'))) {
+      return 'ar';
+    }
+    
+    // Çince karakterler
+    if (cleanText.contains(RegExp(r'[\u4e00-\u9fff]'))) {
+      return 'zh';
+    }
+    
+    // Japonca karakterler (Hiragana, Katakana)
+    if (cleanText.contains(RegExp(r'[\u3040-\u309f\u30a0-\u30ff]'))) {
+      return 'ja';
+    }
+    
+    // Korece karakterler
+    if (cleanText.contains(RegExp(r'[\uac00-\ud7af]'))) {
+      return 'ko';
+    }
+    
+    // Rusça karakterler
+    if (cleanText.contains(RegExp(r'[а-яё]'))) {
+      return 'ru';
+    }
+    
+    // Yunanca karakterler
+    if (cleanText.contains(RegExp(r'[α-ωάέήίόύώ]'))) {
+      return 'el';
+    }
+    
+    // Varsayılan olarak İngilizce
+    return 'en';
+  }
+
   Future<void> _translateWithMyMemory([String? text]) async {
     final textToTranslate = text ?? _inputText;
     try {
+      String sourceLanguage = _fromLang;
+      
+      // Auto detect için dil tespiti yap
+      if (_fromLang == 'auto') {
+        sourceLanguage = await _detectLanguage(textToTranslate);
+        _detectedLanguage = sourceLanguage;
+        notifyListeners(); // UI'ı güncelle
+      } else {
+        _detectedLanguage = null; // Auto detect değilse temizle
+      }
+      
       final response = await http.get(
         Uri.parse('https://api.mymemory.translated.net/get')
             .replace(queryParameters: {
           'q': textToTranslate,
-          'langpair': '$_fromLang|$_toLang',
+          'langpair': '$sourceLanguage|$_toLang',
         }),
       );
       
@@ -1786,6 +2304,31 @@ class TranslatorProvider with ChangeNotifier {
     _history.clear();
     _saveHistory();
     notifyListeners();
+  }
+
+  /// Save translation to Supabase if user is authenticated
+  Future<void> _saveTranslationToSupabase() async {
+    try {
+      // Check if user is authenticated
+      final currentUser = Supabase.instance.client.auth.currentUser;
+      if (currentUser == null) return;
+
+      // Save to translation_history table
+      await Supabase.instance.client.from('translation_history').insert({
+        'user_id': currentUser.id,
+        'source_text': _inputText,
+        'translated_text': _translatedText,
+        'source_language': _fromLang == 'auto' ? _detectedLanguage ?? 'auto' : _fromLang,
+        'target_language': _toLang,
+        'translation_model': _translationModel,
+        'is_favorite': _isCurrentTranslationFavorited,
+        'created_at': DateTime.now().toIso8601String(),
+      });
+    } catch (e) {
+      if (kDebugMode) {
+        print('Failed to save translation to Supabase: $e');
+      }
+    }
   }
 
   void _updateFavoriteStatus() {

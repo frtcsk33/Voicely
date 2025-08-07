@@ -5,11 +5,14 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flag/flag.dart';
 import '../providers/translator_provider.dart';
 import '../widgets/language_selector.dart';
 import '../widgets/better_translation_button.dart';
 import '../widgets/upgrade_to_pro_dialog.dart';
 import 'pro_subscription_screen.dart';
+import '../services/auth_service.dart';
+import 'auth/login_screen.dart';
 
 class AIHomepage extends StatefulWidget {
   const AIHomepage({super.key});
@@ -270,7 +273,7 @@ class _AIHomepageState extends State<AIHomepage>
                   maxLines: null,
                   minLines: 3,
                   decoration: InputDecoration(
-                    hintText: 'Type your message here or use the microphone below',
+                    hintText: context.read<TranslatorProvider>().getLocalizedText('type_message_hint'),
                     hintStyle: GoogleFonts.poppins(
                       color: Colors.grey.shade500,
                       fontSize: 14,
@@ -302,7 +305,7 @@ class _AIHomepageState extends State<AIHomepage>
                           provider.setInputText(clipboardData.text!);
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('Text pasted and ready to translate'),
+                              content: Text(context.read<TranslatorProvider>().getLocalizedText('text_pasted')),
                               duration: Duration(seconds: 2),
                               backgroundColor: Colors.green.shade600,
                             ),
@@ -310,7 +313,7 @@ class _AIHomepageState extends State<AIHomepage>
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('No text found in clipboard'),
+                              content: Text(context.read<TranslatorProvider>().getLocalizedText('no_text_clipboard')),
                               duration: Duration(seconds: 2),
                               backgroundColor: Colors.orange.shade600,
                             ),
@@ -334,7 +337,7 @@ class _AIHomepageState extends State<AIHomepage>
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              'Paste',
+                              context.read<TranslatorProvider>().getLocalizedText('paste'),
                               style: GoogleFonts.poppins(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
@@ -465,7 +468,7 @@ class _AIHomepageState extends State<AIHomepage>
           
           // Clean Status Text
           Text(
-            'Speak now for translation',
+            context.read<TranslatorProvider>().getLocalizedText('speak_now'),
             style: GoogleFonts.poppins(
               fontSize: 18,
               fontWeight: FontWeight.w600,
@@ -506,7 +509,7 @@ class _AIHomepageState extends State<AIHomepage>
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        'Speech Recognition',
+                        context.read<TranslatorProvider>().getLocalizedText('speech_recognition'),
                         style: GoogleFonts.poppins(
                           fontSize: 14,
                           color: Colors.blue.shade600,
@@ -545,7 +548,7 @@ class _AIHomepageState extends State<AIHomepage>
                 },
                 icon: Icon(Icons.stop_rounded, size: 20),
                 label: Text(
-                  'Stop Recording',
+                  context.read<TranslatorProvider>().getLocalizedText('stop_recording'),
                   style: GoogleFonts.poppins(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -731,8 +734,8 @@ class _AIHomepageState extends State<AIHomepage>
                         const SizedBox(width: 4),
                         Text(
                           provider.translationModel == 'ai_pro' && provider.isProUser
-                              ? 'AI Pro'
-                              : 'Translation',
+                              ? context.read<TranslatorProvider>().getLocalizedText('ai_pro')
+                              : context.read<TranslatorProvider>().getLocalizedText('translation'),
                           style: GoogleFonts.poppins(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
@@ -755,7 +758,7 @@ class _AIHomepageState extends State<AIHomepage>
                         Clipboard.setData(ClipboardData(text: provider.translatedText));
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text('Translation copied to clipboard'),
+                            content: Text(context.read<TranslatorProvider>().getLocalizedText('translation_copied')),
                             duration: Duration(seconds: 2),
                             backgroundColor: Colors.green.shade600,
                           ),
@@ -984,25 +987,29 @@ class _AIHomepageState extends State<AIHomepage>
                     ),
                   ),
                   const SizedBox(width: 16),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Voicely',
-                        style: GoogleFonts.poppins(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Voicely',
+                          style: GoogleFonts.poppins(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                      Text(
-                        'Voice Translation App',
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          color: Colors.white.withOpacity(0.9),
+                        Text(
+                          context.read<TranslatorProvider>().getLocalizedText('voice_translation_app'),
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            color: Colors.white.withOpacity(0.9),
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -1010,46 +1017,66 @@ class _AIHomepageState extends State<AIHomepage>
 
             // Menu Items
             Expanded(
-              child: ListView(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                children: [
-                  _buildMenuItem(
-                    icon: Icons.language_rounded,
-                    title: 'App Language',
-                    subtitle: 'Change interface language',
-                    onTap: () => _showLanguageDialog(context),
-                  ),
+              child: Consumer<AuthService>(
+                builder: (context, authService, child) {
+                  return ListView(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    children: [
+                      // Auth Section
+                      if (!authService.isAuthenticated)
+                        _buildMenuItem(
+                          icon: Icons.login_rounded,
+                          title: context.read<TranslatorProvider>().getLocalizedText('sign_in'),
+                          subtitle: context.read<TranslatorProvider>().getLocalizedText('access_account'),
+                          onTap: () => _navigateToSignIn(context),
+                        ),
+                      if (authService.isAuthenticated)
+                        _buildMenuItem(
+                          icon: Icons.account_circle_rounded,
+                          title: authService.currentUser?.email ?? 'Account',
+                          subtitle: context.read<TranslatorProvider>().getLocalizedText('manage_account'),
+                          onTap: () => _showAccountOptions(context),
+                        ),
+                      
+                      _buildMenuItem(
+                        icon: Icons.language_rounded,
+                        title: context.read<TranslatorProvider>().getLocalizedText('app_language'),
+                        subtitle: context.read<TranslatorProvider>().getLocalizedText('change_interface_language'),
+                        onTap: () => _showLanguageDialog(context),
+                      ),
                   _buildMenuItem(
                     icon: Icons.star_rounded,
-                    title: 'Rate Us',
-                    subtitle: 'Rate Voicely on Play Store',
+                    title: context.read<TranslatorProvider>().getLocalizedText('rate_us'),
+                    subtitle: context.read<TranslatorProvider>().getLocalizedText('rate_on_playstore'),
                     onTap: () => _rateApp(),
                   ),
                   _buildMenuItem(
                     icon: Icons.share_rounded,
-                    title: 'Share App',
-                    subtitle: 'Share Voicely with friends',
+                    title: context.read<TranslatorProvider>().getLocalizedText('share_app'),
+                    subtitle: context.read<TranslatorProvider>().getLocalizedText('share_with_friends'),
                     onTap: () => _shareApp(),
                   ),
                   _buildMenuItem(
                     icon: Icons.privacy_tip_rounded,
-                    title: 'Privacy Policy',
-                    subtitle: 'View our privacy policy',
+                    title: context.read<TranslatorProvider>().getLocalizedText('privacy_policy'),
+                    subtitle: context.read<TranslatorProvider>().getLocalizedText('view_privacy_policy'),
                     onTap: () => _openPrivacyPolicy(),
                   ),
                   _buildMenuItem(
                     icon: Icons.info_rounded,
-                    title: 'About',
-                    subtitle: 'App version and info',
+                    title: context.read<TranslatorProvider>().getLocalizedText('about_app'),
+                    subtitle: context.read<TranslatorProvider>().getLocalizedText('app_version_info'),
                     onTap: () => _showAboutDialog(context),
                   ),
                   _buildMenuItem(
                     icon: Icons.bug_report_rounded,
-                    title: 'Report Bug',
-                    subtitle: 'Report issues or feedback',
+                    title: context.read<TranslatorProvider>().getLocalizedText('report_bug'),
+                    subtitle: context.read<TranslatorProvider>().getLocalizedText('report_issues'),
                     onTap: () => _reportBug(),
                   ),
-                ],
+                    ],
+                  );
+                },
               ),
             ),
 
@@ -1130,29 +1157,194 @@ class _AIHomepageState extends State<AIHomepage>
 
   void _showLanguageDialog(BuildContext context) {
     Navigator.of(context).pop(); // Close drawer
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-          'App Language',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: Text('🇺🇸'),
-              title: Text('English'),
-              onTap: () => Navigator.of(context).pop(),
-            ),
-            ListTile(
-              leading: Text('🇹🇷'),
-              title: Text('Türkçe'),
-              onTap: () => Navigator.of(context).pop(),
-            ),
-          ],
-        ),
-      ),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _buildLanguageBottomSheet(context),
+    );
+  }
+
+  Widget _buildLanguageBottomSheet(BuildContext context) {
+    return StatefulBuilder(
+      builder: (context, setState) {
+        String searchQuery = '';
+        final provider = Provider.of<TranslatorProvider>(context, listen: false);
+        
+        // Filter languages based on search query
+        final filteredLanguages = provider.appLanguages.where((language) {
+          return language['label']!.toLowerCase().contains(searchQuery.toLowerCase()) ||
+                 language['value']!.toLowerCase().contains(searchQuery.toLowerCase());
+        }).toList();
+
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.8,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            children: [
+              // Handle
+              Container(
+                margin: const EdgeInsets.only(top: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              
+              // Header
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Row(
+                  children: [
+                    Text(
+                      context.read<TranslatorProvider>().getLocalizedText('app_language'),
+                      style: GoogleFonts.poppins(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey.shade800,
+                      ),
+                    ),
+                    const Spacer(),
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          Icons.close,
+                          color: Colors.grey.shade600,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              
+              // Search Bar
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: TextField(
+                    onChanged: (value) {
+                      setState(() {
+                        searchQuery = value;
+                      });
+                    },
+                    decoration: InputDecoration(
+                      hintText: context.read<TranslatorProvider>().getLocalizedText('search_languages'),
+                      hintStyle: GoogleFonts.poppins(
+                        color: Colors.grey.shade600,
+                        fontSize: 14,
+                      ),
+                      prefixIcon: Icon(
+                        Icons.search,
+                        color: Colors.grey.shade600,
+                        size: 20,
+                      ),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              
+              const SizedBox(height: 16),
+              
+              // Language List
+              Expanded(
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  itemCount: filteredLanguages.length,
+                  itemBuilder: (context, index) {
+                    final language = filteredLanguages[index];
+                    final isSelected = provider.appLanguage == language['value'];
+                    
+                    return GestureDetector(
+                      onTap: () async {
+                        await provider.setAppLanguage(language['value']!);
+                        Navigator.pop(context);
+                        // Show success message
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              '${context.read<TranslatorProvider>().getLocalizedText('language_changed_to')} ${language['label']}',
+                              style: GoogleFonts.poppins(),
+                            ),
+                            backgroundColor: Colors.green.shade600,
+                            duration: const Duration(seconds: 2),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: isSelected ? Colors.blue.shade50 : Colors.transparent,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isSelected ? Colors.blue.shade200 : Colors.transparent,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            // Flag
+                            Flag.fromString(
+                              language['flag']!,
+                              height: 20,
+                              width: 28,
+                              borderRadius: 4,
+                            ),
+                            const SizedBox(width: 16),
+                            
+                            // Language Name
+                            Expanded(
+                              child: Text(
+                                language['label']!,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 16,
+                                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                                  color: isSelected ? Colors.blue.shade700 : Colors.grey.shade800,
+                                ),
+                              ),
+                            ),
+                            
+                            // Selected Indicator
+                            if (isSelected)
+                              Icon(
+                                Icons.check_circle,
+                                color: Colors.blue.shade600,
+                                size: 20,
+                              ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              
+              // Bottom padding for safe area
+              SizedBox(height: MediaQuery.of(context).padding.bottom),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -1233,5 +1425,72 @@ class _AIHomepageState extends State<AIHomepage>
         ),
       );
     }
+  }
+
+  void _navigateToSignIn(BuildContext context) {
+    Navigator.of(context).pop(); // Close drawer
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const LoginScreen(),
+      ),
+    );
+  }
+
+  void _showAccountOptions(BuildContext context) {
+    Navigator.of(context).pop(); // Close drawer
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Consumer<AuthService>(
+          builder: (context, authService, child) {
+            return AlertDialog(
+              title: Text(
+                context.read<TranslatorProvider>().getLocalizedText('account_options'),
+                style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Email: ${authService.currentUser?.email ?? 'N/A'}',
+                    style: GoogleFonts.poppins(),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${context.read<TranslatorProvider>().getLocalizedText('account_type')}: ${context.read<TranslatorProvider>().isProUser ? context.read<TranslatorProvider>().getLocalizedText('pro') : context.read<TranslatorProvider>().getLocalizedText('free')}',
+                    style: GoogleFonts.poppins(),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(
+                    context.read<TranslatorProvider>().getLocalizedText('close'),
+                    style: GoogleFonts.poppins(),
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    Navigator.of(context).pop();
+                    await authService.signOut();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red[600],
+                    foregroundColor: Colors.white,
+                  ),
+                  child: Text(
+                    context.read<TranslatorProvider>().getLocalizedText('sign_out'),
+                    style: GoogleFonts.poppins(),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 }

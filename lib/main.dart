@@ -6,10 +6,12 @@ import 'screens/ai_homepage.dart';
 import 'screens/camera_screen.dart';
 import 'screens/history_screen.dart';
 import 'screens/favorites_screen.dart';
+import 'screens/books_screen.dart';
 import 'screens/settings_screen.dart';
 import 'providers/translator_provider.dart';
 import 'services/supabase_client.dart';
 import 'services/auth_service.dart';
+import 'services/books_service.dart';
 import 'widgets/auth_state_wrapper.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/services.dart';
@@ -53,6 +55,9 @@ class VoicelyApp extends StatelessWidget {
         ),
         ChangeNotifierProvider(
           create: (context) => AuthService(),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => BooksService(),
         ),
       ],
       child: Consumer<TranslatorProvider>(
@@ -172,6 +177,7 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> _screens = [
     const AIHomepage(),
     const CameraScreen(),
+    const BooksScreen(),
     const HistoryScreen(),
     const FavoritesScreen(),
   ];
@@ -221,6 +227,10 @@ class _MainScreenState extends State<MainScreen> {
                 BottomNavigationBarItem(
                   icon: const Icon(Icons.camera_alt),
                   label: context.read<TranslatorProvider>().getLocalizedText('camera'),
+                ),
+                BottomNavigationBarItem(
+                  icon: const Icon(Icons.menu_book),
+                  label: 'Books',
                 ),
                 BottomNavigationBarItem(
                   icon: const Icon(Icons.history),
