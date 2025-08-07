@@ -33,6 +33,11 @@ class TranslatorProvider with ChangeNotifier {
   // Uygulama dili için değişkenler
   String _appLanguage = 'tr';
   bool _isLoading = true;
+  
+  // AI Pro mode için değişkenler
+  bool _isProUser = false;  // Simüle edilmiş Pro kullanıcı durumu
+  bool _useWhisper = false; // Whisper kullanımı
+  String _translationModel = 'standard'; // 'standard' veya 'ai_pro'
 
   // Getters
   String get inputText => _inputText;
@@ -48,6 +53,9 @@ class TranslatorProvider with ChangeNotifier {
   List<Map<String, dynamic>> get history => _history;
   String get appLanguage => _appLanguage;
   bool get isLoading => _isLoading;
+  bool get isProUser => _isProUser;
+  bool get useWhisper => _useWhisper;
+  String get translationModel => _translationModel;
   
   List<Map<String, String>> get languages => [
     {'label': 'İngilizce', 'value': 'en', 'flag': 'GB'},
@@ -1580,35 +1588,12 @@ class TranslatorProvider with ChangeNotifier {
     notifyListeners();
     
     try {
-      // LibreTranslate API kullanımı (ücretsiz)
-      final response = await http.post(
-        Uri.parse('https://libretranslate.de/translate'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: json.encode({
-          'q': textToTranslate,
-          'source': _fromLang,
-          'target': _toLang,
-          'format': 'text',
-        }),
-      );
-      
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (data['translatedText'] != null) {
-          _translatedText = data['translatedText'];
-          _addToHistory();
-          _updateFavoriteStatus();
-          
-          // Çeviri tamamlandığında hedef dilden metni oku
-          await speak(_translatedText, _toLang);
-        } else {
-          _translatedText = 'Çeviri bulunamadı';
-        }
+      if (_translationModel == 'ai_pro' && _isProUser) {
+        // AI Pro çeviri (GPT-4 benzeri)
+        await _translateWithAI(textToTranslate);
       } else {
-        // Fallback olarak MyMemory API kullan
-        await _translateWithMyMemory(textToTranslate);
+        // Standard çeviri
+        await _translateWithStandard(textToTranslate);
       }
     } catch (e) {
       // Fallback olarak MyMemory API kullan
@@ -1617,6 +1602,99 @@ class TranslatorProvider with ChangeNotifier {
     
     _isTranslating = false;
     notifyListeners();
+  }
+  
+  Future<void> _translateWithStandard(String textToTranslate) async {
+    // LibreTranslate API kullanımı (ücretsiz)
+    final response = await http.post(
+      Uri.parse('https://libretranslate.de/translate'),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: json.encode({
+        'q': textToTranslate,
+        'source': _fromLang,
+        'target': _toLang,
+        'format': 'text',
+      }),
+    );
+    
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      if (data['translatedText'] != null) {
+        _translatedText = data['translatedText'];
+        _addToHistory();
+        _updateFavoriteStatus();
+        
+        // Çeviri tamamlandığında hedef dilden metni oku
+        await speak(_translatedText, _toLang);
+      } else {
+        _translatedText = 'Çeviri bulunamadı';
+      }
+    } else {
+      // Fallback olarak MyMemory API kullan
+      await _translateWithMyMemory(textToTranslate);
+    }
+  }
+  
+  Future<void> _translateWithAI(String textToTranslate) async {
+    // Simüle edilmiş AI çeviri - gerçek uygulamada GPT-4 API kullanılacak
+    await Future.delayed(const Duration(milliseconds: 1500)); // AI düşünme simülasyonu
+    
+    // Daha doğal çeviri örnekleri
+    Map<String, Map<String, String>> aiTranslations = {
+      'tr': {
+        'emin misin': 'Are you sure?',
+        'nasılsın': 'How are you doing?',
+        'ne yapıyorsun': 'What are you up to?',
+        'görüşürüz': 'See you later',
+        'iyi geceler': 'Good night',
+        'günaydın': 'Good morning',
+        'teşekkürler': 'Thank you so much',
+        'rica ederim': 'You\'re welcome',
+        'özür dilerim': 'I apologize',
+        'merhaba': 'Hello there',
+      },
+      'en': {
+        'hello': 'Merhaba',
+        'how are you': 'Nasılsın?',
+        'thank you': 'Teşekkür ederim',
+        'good morning': 'Günaydın',
+        'good night': 'İyi geceler',
+        'see you later': 'Görüşürüz',
+        'are you sure': 'Emin misin?',
+        'what are you doing': 'Ne yapıyorsun?',
+        'you\'re welcome': 'Rica ederim',
+        'i apologize': 'Özür dilerim',
+      }
+    };
+    
+    String lowerInput = textToTranslate.toLowerCase();
+    String? aiResult;
+    
+    // AI çeviri arama
+    if (aiTranslations.containsKey(_fromLang)) {
+      for (String key in aiTranslations[_fromLang]!.keys) {
+        if (lowerInput.contains(key)) {
+          aiResult = aiTranslations[_fromLang]![key];
+          break;
+        }
+      }
+    }
+    
+    if (aiResult != null) {
+      _translatedText = aiResult;
+    } else {
+      // Fallback to standard translation
+      await _translateWithStandard(textToTranslate);
+      return;
+    }
+    
+    _addToHistory();
+    _updateFavoriteStatus();
+    
+    // Çeviri tamamlandığında hedef dilden metni oku
+    await speak(_translatedText, _toLang);
   }
 
   Future<void> _translateWithMyMemory([String? text]) async {
@@ -2528,6 +2606,35 @@ class TranslatorProvider with ChangeNotifier {
     }
   }
 
+  // Pro mode kontrol fonksiyonları
+  void toggleProMode() {
+    _isProUser = !_isProUser;
+    notifyListeners();
+  }
+  
+  void setTranslationModel(String model) {
+    if (_isProUser) {
+      _translationModel = model;
+      notifyListeners();
+    }
+  }
+  
+  void toggleTranslationModel() {
+    if (_isProUser) {
+      _translationModel = _translationModel == 'standard' ? 'ai_pro' : 'standard';
+      notifyListeners();
+    }
+  }
+  
+  void setWhisperUsage(bool useWhisper) {
+    _useWhisper = useWhisper;
+    notifyListeners();
+  }
+  
+  bool canUseAIPro() {
+    return _isProUser;
+  }
+  
   // Diğer eksik diller için placeholder fonksiyonlar
   String _getCzechText(String key) => _getEnglishText(key);
   String _getSlovakText(String key) => _getEnglishText(key);

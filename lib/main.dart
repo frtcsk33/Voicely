@@ -8,12 +8,17 @@ import 'screens/history_screen.dart';
 import 'screens/favorites_screen.dart';
 import 'screens/settings_screen.dart';
 import 'providers/translator_provider.dart';
+import 'services/supabase_client.dart';
+import 'services/auth_service.dart';
+import 'widgets/auth_state_wrapper.dart';
 import 'package:google_fonts/google_fonts.dart';
-
 import 'package:flutter/services.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize Supabase
+  await SupabaseConfig.initialize();
   
   // Türkçe karakter desteği için sistem ayarları
   SystemChrome.setSystemUIOverlayStyle(
@@ -37,12 +42,19 @@ class VoicelyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (context) {
-        final provider = TranslatorProvider();
-        provider.initializeApp();
-        return provider;
-      },
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (context) {
+            final provider = TranslatorProvider();
+            provider.initializeApp();
+            return provider;
+          },
+        ),
+        ChangeNotifierProvider(
+          create: (context) => AuthService(),
+        ),
+      ],
       child: Consumer<TranslatorProvider>(
         builder: (context, provider, child) {
           return MaterialApp(
@@ -136,7 +148,7 @@ class VoicelyApp extends StatelessWidget {
                  ),
                ),
              ),
-            home: const MainScreen(),
+            home: const AuthStateWrapper(),
             routes: {
               '/settings': (context) => const SettingsScreen(),
             },
