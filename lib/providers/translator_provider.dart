@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:http/http.dart' as http;
@@ -20,6 +21,7 @@ class TranslatorProvider with ChangeNotifier {
   bool _isRecording = false;
   bool _isAvailable = false;
   bool _isTranslating = false;
+  TextEditingController _textController = TextEditingController();
   
   // Favori sistemi için değişkenler
   List<Map<String, dynamic>> _favorites = [];
@@ -40,6 +42,7 @@ class TranslatorProvider with ChangeNotifier {
   bool get isRecording => _isRecording;
   bool get isAvailable => _isAvailable;
   bool get isTranslating => _isTranslating;
+  TextEditingController get textController => _textController;
   List<Map<String, dynamic>> get favorites => _favorites;
   bool get isCurrentTranslationFavorited => _isCurrentTranslationFavorited;
   List<Map<String, dynamic>> get history => _history;
@@ -1300,9 +1303,14 @@ class TranslatorProvider with ChangeNotifier {
           print('Speech result: ${result.recognizedWords}');
           if (result.finalResult) {
             _inputText = result.recognizedWords;
+            _textController.text = result.recognizedWords; // Sync with text field
             _isRecording = false;
             notifyListeners();
             _debounceTranslate();
+          } else {
+            // Show partial results in text field during recording
+            _textController.text = result.recognizedWords;
+            notifyListeners(); // Update UI to show partial results
           }
         },
         localeId: localeId,
@@ -1553,8 +1561,20 @@ class TranslatorProvider with ChangeNotifier {
     _debounceTranslate();
   }
 
-  Future<void> translateText() async {
-    if (_inputText.isEmpty) return;
+  void clearTranslation() {
+    _translatedText = '';
+    _isTranslating = false;
+    notifyListeners();
+  }
+
+  Future<void> translateText([String? text]) async {
+    final textToTranslate = text ?? _inputText;
+    if (textToTranslate.isEmpty) return;
+    
+    // Update input text if provided
+    if (text != null && text != _inputText) {
+      _inputText = text;
+    }
     
     _isTranslating = true;
     notifyListeners();
@@ -1567,7 +1587,7 @@ class TranslatorProvider with ChangeNotifier {
           'Content-Type': 'application/json',
         },
         body: json.encode({
-          'q': _inputText,
+          'q': textToTranslate,
           'source': _fromLang,
           'target': _toLang,
           'format': 'text',
@@ -1588,23 +1608,24 @@ class TranslatorProvider with ChangeNotifier {
         }
       } else {
         // Fallback olarak MyMemory API kullan
-        await _translateWithMyMemory();
+        await _translateWithMyMemory(textToTranslate);
       }
     } catch (e) {
       // Fallback olarak MyMemory API kullan
-      await _translateWithMyMemory();
+      await _translateWithMyMemory(textToTranslate);
     }
     
     _isTranslating = false;
     notifyListeners();
   }
 
-  Future<void> _translateWithMyMemory() async {
+  Future<void> _translateWithMyMemory([String? text]) async {
+    final textToTranslate = text ?? _inputText;
     try {
       final response = await http.get(
         Uri.parse('https://api.mymemory.translated.net/get')
             .replace(queryParameters: {
-          'q': _inputText,
+          'q': textToTranslate,
           'langpair': '$_fromLang|$_toLang',
         }),
       );
@@ -2561,6 +2582,7 @@ class TranslatorProvider with ChangeNotifier {
     _debounceTimer?.cancel();
     _historyDebounceTimer?.cancel();
     _speakDebounceTimer?.cancel();
+    _textController.dispose();
     super.dispose();
   }
 } 

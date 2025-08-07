@@ -14,8 +14,8 @@ class LanguageSelector extends StatelessWidget {
     return Consumer<TranslatorProvider>(
       builder: (context, provider, child) {
         return Container(
-          width: screenWidth * 0.9,
-          padding: const EdgeInsets.all(20),
+          width: screenWidth * 0.95,
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
@@ -27,83 +27,49 @@ class LanguageSelector extends StatelessWidget {
               ),
             ],
           ),
-          child: Column(
+          child: Row(
             children: [
-              // Header
-              Row(
-                children: [
-                  Icon(
-                    Icons.language_rounded,
-                    color: Colors.blue.shade600,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Select Languages',
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey.shade800,
-                    ),
-                  ),
-                ],
+              // From Language
+              Expanded(
+                child: _buildLanguageButton(
+                  context,
+                  provider,
+                  provider.fromLang,
+                  'From',
+                  true,
+                ),
               ),
               
-              const SizedBox(height: 16),
-              
-              // Language Selection Row
-              Row(
-                children: [
-                  // From Language
-                  Expanded(
-                    child: _buildLanguageDropdown(
-                      label: 'From',
-                      value: provider.fromLang,
-                      languages: provider.languages,
-                      onChanged: (value) => provider.setFromLang(value!),
-                      color: Colors.blue,
+              // Swap Button
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: GestureDetector(
+                  onTap: provider.swapLanguages,
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.swap_horiz_rounded,
+                      color: Colors.grey.shade600,
+                      size: 20,
                     ),
                   ),
-                  
-                  // Swap Button
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: GestureDetector(
-                      onTap: () => provider.swapLanguages(),
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: Colors.purple.shade50,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: Colors.purple.shade200),
-                        ),
-                        child: Icon(
-                          Icons.swap_horiz_rounded,
-                          color: Colors.purple.shade600,
-                          size: 20,
-                        ),
-                      ),
-                    ),
-                  ),
-                  
-                  // To Language
-                  Expanded(
-                    child: _buildLanguageDropdown(
-                      label: 'To',
-                      value: provider.toLang,
-                      languages: provider.languages,
-                      onChanged: (value) => provider.setToLang(value!),
-                      color: Colors.green,
-                    ),
-                  ),
-                ],
+                ),
               ),
               
-              const SizedBox(height: 16),
-              
-              // Popular Languages
-              _buildPopularLanguages(provider),
+              // To Language
+              Expanded(
+                child: _buildLanguageButton(
+                  context,
+                  provider,
+                  provider.toLang,
+                  'To',
+                  false,
+                ),
+              ),
             ],
           ),
         );
@@ -111,163 +77,192 @@ class LanguageSelector extends StatelessWidget {
     );
   }
 
-  Widget _buildLanguageDropdown({
-    required String label,
-    required String value,
-    required List<Map<String, String>> languages,
-    required Function(String?) onChanged,
-    required Color color,
-  }) {
-    final selectedLanguage = languages.firstWhere(
-      (lang) => lang['value'] == value,
-      orElse: () => languages.first,
+  Widget _buildLanguageButton(
+    BuildContext context,
+    TranslatorProvider provider,
+    String langCode,
+    String label,
+    bool isFrom,
+  ) {
+    final language = provider.languages.firstWhere(
+      (lang) => lang['value'] == langCode,
+      orElse: () => {'label': 'Unknown', 'value': langCode, 'flag': 'GB'},
     );
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: GoogleFonts.poppins(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: Colors.grey.shade600,
-          ),
+    return GestureDetector(
+      onTap: () => _showLanguagePicker(context, provider, isFrom),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade200),
         ),
-        const SizedBox(height: 6),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: color.withOpacity(0.3)),
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: value,
-              isExpanded: true,
-              icon: Icon(
-                Icons.keyboard_arrow_down_rounded,
-                color: Color.lerp(color, Colors.black, 0.2)!,
-                size: 16,
-              ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
               style: GoogleFonts.poppins(
                 fontSize: 12,
-                color: Colors.black87,
+                fontWeight: FontWeight.w500,
+                color: Colors.grey.shade600,
               ),
-              items: languages.take(10).map((lang) {
-                return DropdownMenuItem<String>(
-                  value: lang['value'],
-                  child: Row(
-                    children: [
-                      Flag.fromString(
-                        lang['flag'] ?? 'UN',
-                        height: 16,
-                        width: 20,
-                        borderRadius: 2,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          lang['label'] ?? '',
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }).toList(),
-              onChanged: onChanged,
             ),
-          ),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Flag.fromString(
+                  language['flag']!,
+                  height: 20,
+                  width: 28,
+                  borderRadius: 4,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    language['label']!,
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey.shade800,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  color: Colors.grey.shade500,
+                  size: 20,
+                ),
+              ],
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 
-  Widget _buildPopularLanguages(TranslatorProvider provider) {
-    final popularLanguages = [
-      {'value': 'en', 'label': 'English', 'flag': 'GB'},
-      {'value': 'es', 'label': 'Spanish', 'flag': 'ES'},
-      {'value': 'fr', 'label': 'French', 'flag': 'FR'},
-      {'value': 'de', 'label': 'German', 'flag': 'DE'},
-      {'value': 'it', 'label': 'Italian', 'flag': 'IT'},
-      {'value': 'pt', 'label': 'Portuguese', 'flag': 'PT'},
-      {'value': 'ru', 'label': 'Russian', 'flag': 'RU'},
-      {'value': 'ja', 'label': 'Japanese', 'flag': 'JP'},
-      {'value': 'ko', 'label': 'Korean', 'flag': 'KR'},
-      {'value': 'zh', 'label': 'Chinese', 'flag': 'CN'},
-    ];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Popular Languages',
-          style: GoogleFonts.poppins(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: Colors.grey.shade600,
-          ),
+  void _showLanguagePicker(BuildContext context, TranslatorProvider provider, bool isFrom) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.7,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: popularLanguages.map((lang) {
-            final isSelected = provider.fromLang == lang['value'] || 
-                              provider.toLang == lang['value'];
+        child: Column(
+          children: [
+            // Handle
+            Container(
+              margin: const EdgeInsets.only(top: 12),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
             
-            return GestureDetector(
-              onTap: () {
-                if (provider.fromLang != lang['value']) {
-                  provider.setToLang(lang['value']!);
-                }
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: isSelected 
-                      ? Colors.blue.shade100 
-                      : Colors.grey.shade50,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: isSelected 
-                        ? Colors.blue.shade300 
-                        : Colors.grey.shade200,
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Flag.fromString(
-                      lang['flag']!,
-                      height: 12,
-                      width: 16,
-                      borderRadius: 1,
+            // Header
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Row(
+                children: [
+                  Text(
+                    isFrom ? 'Select source language' : 'Select target language',
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey.shade800,
                     ),
-                    const SizedBox(width: 4),
-                    Text(
-                      lang['label']!,
-                      style: GoogleFonts.poppins(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w500,
-                        color: isSelected 
-                            ? Colors.blue.shade700 
-                            : Colors.grey.shade700,
+                  ),
+                  const Spacer(),
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        Icons.close_rounded,
+                        color: Colors.grey.shade600,
+                        size: 20,
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            );
-          }).toList(),
+            ),
+            
+            // Language List
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                itemCount: provider.languages.length,
+                itemBuilder: (context, index) {
+                  final language = provider.languages[index];
+                  final isSelected = (isFrom ? provider.fromLang : provider.toLang) == language['value'];
+                  
+                  return GestureDetector(
+                    onTap: () {
+                      if (isFrom) {
+                        provider.setFromLang(language['value']!);
+                      } else {
+                        provider.setToLang(language['value']!);
+                      }
+                      Navigator.pop(context);
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: isSelected ? Colors.blue.shade50 : Colors.transparent,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isSelected ? Colors.blue.shade200 : Colors.grey.shade200,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Flag.fromString(
+                            language['flag']!,
+                            height: 24,
+                            width: 32,
+                            borderRadius: 4,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              language['label']!,
+                              style: GoogleFonts.poppins(
+                                fontSize: 16,
+                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                                color: isSelected ? Colors.blue.shade700 : Colors.grey.shade800,
+                              ),
+                            ),
+                          ),
+                          if (isSelected)
+                            Icon(
+                              Icons.check_rounded,
+                              color: Colors.blue.shade600,
+                              size: 20,
+                            ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }
