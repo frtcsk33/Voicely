@@ -33,8 +33,8 @@ class _CameraScreenState extends State<CameraScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: Text(
-          'Kamera Çeviri',
+                 title: Text(
+           context.read<TranslatorProvider>().getLocalizedText('camera_translation'),
           style: GoogleFonts.poppins(
             fontWeight: FontWeight.bold,
           ),
@@ -78,8 +78,8 @@ class _CameraScreenState extends State<CameraScreen> {
                         children: [
                           Padding(
                             padding: const EdgeInsets.only(left: 4, bottom: 8),
-                            child: Text(
-                              'Hedef Dil',
+                                                         child: Text(
+                               context.read<TranslatorProvider>().getLocalizedText('target_language'),
                               style: GoogleFonts.poppins(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
@@ -87,9 +87,9 @@ class _CameraScreenState extends State<CameraScreen> {
                               ),
                             ),
                           ),
-                          _buildLanguageDropdown(
-                            context,
-                            'Hedef Dil',
+                                                     _buildLanguageDropdown(
+                             context,
+                             context.read<TranslatorProvider>().getLocalizedText('target_language'),
                             provider.toLang,
                             (value) => provider.setToLang(value!),
                             provider.languages,
@@ -369,50 +369,214 @@ class _CameraScreenState extends State<CameraScreen> {
     Function(String?) onChanged,
     List<Map<String, String>> languages,
   ) {
-    return Container(
-      height: 60,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[300]!),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: value,
-          isExpanded: true,
-          icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[600]),
-          style: const TextStyle(fontSize: 16, color: Colors.black87),
-          items: languages
-              .map((lang) => DropdownMenuItem(
-                    value: lang['value'],
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Row(
-                        children: [
-                          Flag.fromString(
-                            lang['flag'] ?? 'UN',
-                            height: 18,
-                            width: 28,
-                            borderRadius: 3,
+    return Consumer<TranslatorProvider>(
+      builder: (context, provider, child) {
+        return Container(
+          height: 60,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey[300]!),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: value,
+              isExpanded: true,
+              icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[600]),
+              style: const TextStyle(fontSize: 16, color: Colors.black87),
+              items: languages
+                  .map((lang) => DropdownMenuItem(
+                        value: lang['value'],
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Row(
+                            children: [
+                              Flag.fromString(
+                                lang['flag'] ?? 'UN',
+                                height: 18,
+                                width: 28,
+                                borderRadius: 3,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  _getLocalizedLanguageName(lang['value']!, provider),
+                                  style: const TextStyle(fontSize: 14),
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              lang['label']!,
-                              style: const TextStyle(fontSize: 14),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ))
-              .toList(),
-          onChanged: onChanged,
-          dropdownColor: Colors.white,
-          menuMaxHeight: 300,
-        ),
-      ),
+                        ),
+                      ))
+                  .toList(),
+              onChanged: onChanged,
+              dropdownColor: Colors.white,
+              menuMaxHeight: 300,
+            ),
+          ),
+        );
+      },
     );
+  }
+
+  String _getLocalizedLanguageName(String langCode, TranslatorProvider provider) {
+    // Uygulama diline göre dil isimlerini döndür
+    switch (provider.appLanguage) {
+      case 'tr':
+        return _getTurkishLanguageName(langCode);
+      case 'en':
+        return _getEnglishLanguageName(langCode);
+      default:
+        return _getEnglishLanguageName(langCode); // Varsayılan olarak İngilizce
+    }
+  }
+
+  String _getTurkishLanguageName(String langCode) {
+    switch (langCode) {
+      case 'tr': return 'Türkçe';
+      case 'en': return 'İngilizce';
+      case 'de': return 'Almanca';
+      case 'fr': return 'Fransızca';
+      case 'es': return 'İspanyolca';
+      case 'it': return 'İtalyanca';
+      case 'pt': return 'Portekizce';
+      case 'ru': return 'Rusça';
+      case 'ja': return 'Japonca';
+      case 'ko': return 'Korece';
+      case 'zh': return 'Çince (Basitleştirilmiş)';
+      case 'zh-tw': return 'Çince (Geleneksel)';
+      case 'ar': return 'Arapça';
+      case 'hi': return 'Hintçe';
+      case 'nl': return 'Hollandaca';
+      case 'sv': return 'İsveççe';
+      case 'no': return 'Norveççe';
+      case 'da': return 'Danca';
+      case 'fi': return 'Fince';
+      case 'pl': return 'Lehçe';
+      case 'cs': return 'Çekçe';
+      case 'sk': return 'Slovakça';
+      case 'hu': return 'Macarca';
+      case 'ro': return 'Rumence';
+      case 'bg': return 'Bulgarca';
+      case 'hr': return 'Hırvatça';
+      case 'sr': return 'Sırpça';
+      case 'sl': return 'Slovence';
+      case 'lt': return 'Litvanyaca';
+      case 'lv': return 'Letonca';
+      case 'et': return 'Estonca';
+      case 'el': return 'Yunanca';
+      case 'he': return 'İbranice';
+      case 'th': return 'Tayca';
+      case 'vi': return 'Vietnamca';
+      case 'id': return 'Endonezce';
+      case 'ms': return 'Malayca';
+      case 'fil': return 'Filipince';
+      case 'bn': return 'Bengalce';
+      case 'ur': return 'Urduca';
+      case 'fa': return 'Farsça';
+      case 'uk': return 'Ukraynaca';
+      case 'be': return 'Belarusça';
+      case 'kk': return 'Kazakça';
+      case 'uz': return 'Özbekçe';
+      case 'ky': return 'Kırgızca';
+      case 'tg': return 'Tacikçe';
+      case 'tk': return 'Türkmence';
+      case 'mn': return 'Moğolca';
+      case 'am': return 'Amharca';
+      case 'sw': return 'Svahili';
+      case 'ha': return 'Hausa';
+      case 'yo': return 'Yoruba';
+      case 'ig': return 'İgbo';
+      case 'zu': return 'Zulu';
+      case 'af': return 'Afrikaanca';
+      case 'ca': return 'Katalanca';
+      case 'eu': return 'Baskça';
+      case 'gl': return 'Galiçyaca';
+      case 'ga': return 'İrlandaca';
+      case 'gd': return 'İskoç Galcesi';
+      case 'cy': return 'Galce';
+      case 'is': return 'İzlandaca';
+      case 'mt': return 'Maltaca';
+      case 'co': return 'Korsikaca';
+      case 'lb': return 'Lüksemburgca';
+      case 'eo': return 'Esperanto';
+      case 'la': return 'Latince';
+      default: return 'Bilinmeyen Dil';
+    }
+  }
+
+  String _getEnglishLanguageName(String langCode) {
+    switch (langCode) {
+      case 'tr': return 'Turkish';
+      case 'en': return 'English';
+      case 'de': return 'German';
+      case 'fr': return 'French';
+      case 'es': return 'Spanish';
+      case 'it': return 'Italian';
+      case 'pt': return 'Portuguese';
+      case 'ru': return 'Russian';
+      case 'ja': return 'Japanese';
+      case 'ko': return 'Korean';
+      case 'zh': return 'Chinese (Simplified)';
+      case 'zh-tw': return 'Chinese (Traditional)';
+      case 'ar': return 'Arabic';
+      case 'hi': return 'Hindi';
+      case 'nl': return 'Dutch';
+      case 'sv': return 'Swedish';
+      case 'no': return 'Norwegian';
+      case 'da': return 'Danish';
+      case 'fi': return 'Finnish';
+      case 'pl': return 'Polish';
+      case 'cs': return 'Czech';
+      case 'sk': return 'Slovak';
+      case 'hu': return 'Hungarian';
+      case 'ro': return 'Romanian';
+      case 'bg': return 'Bulgarian';
+      case 'hr': return 'Croatian';
+      case 'sr': return 'Serbian';
+      case 'sl': return 'Slovenian';
+      case 'lt': return 'Lithuanian';
+      case 'lv': return 'Latvian';
+      case 'et': return 'Estonian';
+      case 'el': return 'Greek';
+      case 'he': return 'Hebrew';
+      case 'th': return 'Thai';
+      case 'vi': return 'Vietnamese';
+      case 'id': return 'Indonesian';
+      case 'ms': return 'Malay';
+      case 'fil': return 'Filipino';
+      case 'bn': return 'Bengali';
+      case 'ur': return 'Urdu';
+      case 'fa': return 'Persian';
+      case 'uk': return 'Ukrainian';
+      case 'be': return 'Belarusian';
+      case 'kk': return 'Kazakh';
+      case 'uz': return 'Uzbek';
+      case 'ky': return 'Kyrgyz';
+      case 'tg': return 'Tajik';
+      case 'tk': return 'Turkmen';
+      case 'mn': return 'Mongolian';
+      case 'am': return 'Amharic';
+      case 'sw': return 'Swahili';
+      case 'ha': return 'Hausa';
+      case 'yo': return 'Yoruba';
+      case 'ig': return 'Igbo';
+      case 'zu': return 'Zulu';
+      case 'af': return 'Afrikaans';
+      case 'ca': return 'Catalan';
+      case 'eu': return 'Basque';
+      case 'gl': return 'Galician';
+      case 'ga': return 'Irish';
+      case 'gd': return 'Scottish Gaelic';
+      case 'cy': return 'Welsh';
+      case 'is': return 'Icelandic';
+      case 'mt': return 'Maltese';
+      case 'co': return 'Corsican';
+      case 'lb': return 'Luxembourgish';
+      case 'eo': return 'Esperanto';
+      case 'la': return 'Latin';
+      default: return 'Unknown Language';
+    }
   }
 
   Future<void> _takePhoto() async {

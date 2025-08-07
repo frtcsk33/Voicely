@@ -54,7 +54,7 @@ class FavoritesScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Çevirilerinizi favorilere ekleyerek\ndaha sonra kolayca erişebilirsiniz',
+                    context.read<TranslatorProvider>().getLocalizedText('add_favorites_description'),
                     textAlign: TextAlign.center,
                     style: GoogleFonts.poppins(
                       fontSize: 16,
@@ -70,7 +70,7 @@ class FavoritesScreen extends StatelessWidget {
                       border: Border.all(color: Colors.red[200]!),
                     ),
                     child: Text(
-                      'Çeviri sayfasından favori ekleyin',
+                      context.read<TranslatorProvider>().getLocalizedText('add_from_translate_page'),
                       style: GoogleFonts.poppins(
                         fontSize: 14,
                         color: Colors.red[700],

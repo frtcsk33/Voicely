@@ -3,8 +3,22 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../providers/translator_provider.dart';
 
-class HistoryScreen extends StatelessWidget {
+class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
+
+  @override
+  State<HistoryScreen> createState() => _HistoryScreenState();
+}
+
+class _HistoryScreenState extends State<HistoryScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Load history when screen initializes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<TranslatorProvider>().loadHistory();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -61,7 +75,7 @@ class HistoryScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    'Çeviri Geçmişi',
+                    context.read<TranslatorProvider>().getLocalizedText('translation_history'),
                     style: GoogleFonts.poppins(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -70,7 +84,7 @@ class HistoryScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Henüz çeviri geçmişi yok',
+                    context.read<TranslatorProvider>().getLocalizedText('no_history_yet'),
                     style: GoogleFonts.poppins(
                       fontSize: 16,
                       color: Colors.grey[600],
@@ -85,7 +99,7 @@ class HistoryScreen extends StatelessWidget {
                       border: Border.all(color: Colors.orange[200]!),
                     ),
                     child: Text(
-                      'Çeviri yaptığınızda burada görünecek',
+                      context.read<TranslatorProvider>().getLocalizedText('view_recent_translations'),
                       style: GoogleFonts.poppins(
                         fontSize: 14,
                         color: Colors.orange[700],
@@ -192,7 +206,7 @@ class HistoryScreen extends StatelessWidget {
             style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
           ),
           content: Text(
-            'Tüm geçmiş çevirileri silmek istediğinizden emin misiniz?',
+            context.read<TranslatorProvider>().getLocalizedText('clear_history_confirm'),
             style: GoogleFonts.poppins(),
           ),
           actions: [
@@ -241,4 +255,4 @@ class HistoryScreen extends StatelessWidget {
       return 'Bilinmeyen';
     }
   }
-} 
+}

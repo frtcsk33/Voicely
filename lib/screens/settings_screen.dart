@@ -14,8 +14,8 @@ class SettingsScreen extends StatelessWidget {
         return Scaffold(
           backgroundColor: Colors.grey[50],
           appBar: AppBar(
-            title: Text(
-              provider.getLocalizedText('settings'),
+                    title: Text(
+          context.read<TranslatorProvider>().getLocalizedText('settings'),
               style: GoogleFonts.poppins(
                 fontWeight: FontWeight.bold,
               ),
@@ -40,8 +40,8 @@ class SettingsScreen extends StatelessWidget {
                     color: Colors.blue[600],
                     size: 28,
                   ),
-                  title: Text(
-                    provider.getLocalizedText('app_language'),
+                  title:                 Text(
+                  context.read<TranslatorProvider>().getLocalizedText('app_language'),
                     style: GoogleFonts.poppins(
                       fontWeight: FontWeight.w600,
                       fontSize: 16,
@@ -79,8 +79,8 @@ class SettingsScreen extends StatelessWidget {
                     color: Colors.orange[600],
                     size: 28,
                   ),
-                  title: Text(
-                    provider.getLocalizedText('about_app'),
+                  title:                 Text(
+                  context.read<TranslatorProvider>().getLocalizedText('about_app'),
                     style: GoogleFonts.poppins(
                       fontWeight: FontWeight.w600,
                       fontSize: 16,
@@ -115,8 +115,8 @@ class SettingsScreen extends StatelessWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(
-            provider.getLocalizedText('select_language'),
+          title:                 Text(
+                  context.read<TranslatorProvider>().getLocalizedText('select_language'),
             style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
           ),
           content: SizedBox(
@@ -159,7 +159,7 @@ class SettingsScreen extends StatelessWidget {
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
               child: Text(
-                provider.getLocalizedText('cancel'),
+                context.read<TranslatorProvider>().getLocalizedText('cancel'),
                 style: GoogleFonts.poppins(),
               ),
             ),

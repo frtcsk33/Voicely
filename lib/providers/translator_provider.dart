@@ -11,6 +11,7 @@ class TranslatorProvider with ChangeNotifier {
   final FlutterTts _flutterTts = FlutterTts();
   Timer? _debounceTimer;
   Timer? _historyDebounceTimer;
+  Timer? _speakDebounceTimer;
   
   String _inputText = '';
   String _translatedText = '';
@@ -56,8 +57,67 @@ class TranslatorProvider with ChangeNotifier {
     {'label': 'Rusça', 'value': 'ru', 'flag': 'RU'},
     {'label': 'Japonca', 'value': 'ja', 'flag': 'JP'},
     {'label': 'Korece', 'value': 'ko', 'flag': 'KR'},
-    {'label': 'Çince', 'value': 'zh', 'flag': 'CN'},
+    {'label': 'Çince (Basitleştirilmiş)', 'value': 'zh', 'flag': 'CN'},
+    {'label': 'Çince (Geleneksel)', 'value': 'zh-tw', 'flag': 'TW'},
     {'label': 'Arapça', 'value': 'ar', 'flag': 'SA'},
+    {'label': 'Hintçe', 'value': 'hi', 'flag': 'IN'},
+    {'label': 'Bengalce', 'value': 'bn', 'flag': 'BD'},
+    {'label': 'Urduca', 'value': 'ur', 'flag': 'PK'},
+    {'label': 'Farsça', 'value': 'fa', 'flag': 'IR'},
+    {'label': 'Hollandaca', 'value': 'nl', 'flag': 'NL'},
+    {'label': 'İsveççe', 'value': 'sv', 'flag': 'SE'},
+    {'label': 'Norveççe', 'value': 'no', 'flag': 'NO'},
+    {'label': 'Danca', 'value': 'da', 'flag': 'DK'},
+    {'label': 'Fince', 'value': 'fi', 'flag': 'FI'},
+    {'label': 'Lehçe', 'value': 'pl', 'flag': 'PL'},
+    {'label': 'Çekçe', 'value': 'cs', 'flag': 'CZ'},
+    {'label': 'Slovakça', 'value': 'sk', 'flag': 'SK'},
+    {'label': 'Macarca', 'value': 'hu', 'flag': 'HU'},
+    {'label': 'Rumence', 'value': 'ro', 'flag': 'RO'},
+    {'label': 'Bulgarca', 'value': 'bg', 'flag': 'BG'},
+    {'label': 'Hırvatça', 'value': 'hr', 'flag': 'HR'},
+    {'label': 'Sırpça', 'value': 'sr', 'flag': 'RS'},
+    {'label': 'Slovence', 'value': 'sl', 'flag': 'SI'},
+    {'label': 'Litvanyaca', 'value': 'lt', 'flag': 'LT'},
+    {'label': 'Letonca', 'value': 'lv', 'flag': 'LV'},
+    {'label': 'Estonca', 'value': 'et', 'flag': 'EE'},
+    {'label': 'Yunanca', 'value': 'el', 'flag': 'GR'},
+    {'label': 'İbranice', 'value': 'he', 'flag': 'IL'},
+    {'label': 'Tayca', 'value': 'th', 'flag': 'TH'},
+    {'label': 'Vietnamca', 'value': 'vi', 'flag': 'VN'},
+    {'label': 'Endonezce', 'value': 'id', 'flag': 'ID'},
+    {'label': 'Malayca', 'value': 'ms', 'flag': 'MY'},
+    {'label': 'Filipince', 'value': 'tl', 'flag': 'PH'},
+    {'label': 'Ukraynaca', 'value': 'uk', 'flag': 'UA'},
+    {'label': 'Belarusça', 'value': 'be', 'flag': 'BY'},
+    {'label': 'Gürcüce', 'value': 'ka', 'flag': 'GE'},
+    {'label': 'Ermenice', 'value': 'hy', 'flag': 'AM'},
+    {'label': 'Azerbaycanca', 'value': 'az', 'flag': 'AZ'},
+    {'label': 'Kazakça', 'value': 'kk', 'flag': 'KZ'},
+    {'label': 'Özbekçe', 'value': 'uz', 'flag': 'UZ'},
+    {'label': 'Kırgızca', 'value': 'ky', 'flag': 'KG'},
+    {'label': 'Tacikçe', 'value': 'tg', 'flag': 'TJ'},
+    {'label': 'Türkmence', 'value': 'tk', 'flag': 'TM'},
+    {'label': 'Moğolca', 'value': 'mn', 'flag': 'MN'},
+    {'label': 'Amharca', 'value': 'am', 'flag': 'ET'},
+    {'label': 'Swahili', 'value': 'sw', 'flag': 'KE'},
+    {'label': 'Hausa', 'value': 'ha', 'flag': 'NG'},
+    {'label': 'Yoruba', 'value': 'yo', 'flag': 'NG'},
+    {'label': 'Igbo', 'value': 'ig', 'flag': 'NG'},
+    {'label': 'Zulu', 'value': 'zu', 'flag': 'ZA'},
+    {'label': 'Afrikaans', 'value': 'af', 'flag': 'ZA'},
+    {'label': 'Katalanca', 'value': 'ca', 'flag': 'ES'},
+    {'label': 'Baskça', 'value': 'eu', 'flag': 'ES'},
+    {'label': 'Galce', 'value': 'gl', 'flag': 'ES'},
+    {'label': 'İrlandaca', 'value': 'ga', 'flag': 'IE'},
+    {'label': 'İskoçça', 'value': 'gd', 'flag': 'GB'},
+    {'label': 'Galce (Welsh)', 'value': 'cy', 'flag': 'GB'},
+    {'label': 'İzlandaca', 'value': 'is', 'flag': 'IS'},
+    {'label': 'Maltaca', 'value': 'mt', 'flag': 'MT'},
+    {'label': 'Korsikaca', 'value': 'co', 'flag': 'FR'},
+    {'label': 'Lüksemburgca', 'value': 'lb', 'flag': 'LU'},
+    {'label': 'Esperanto', 'value': 'eo', 'flag': 'UN'},
+    {'label': 'Latin', 'value': 'la', 'flag': 'VA'},
   ];
 
   List<Map<String, String>> get appLanguages => [
@@ -71,8 +131,67 @@ class TranslatorProvider with ChangeNotifier {
     {'label': 'Русский', 'value': 'ru', 'flag': 'RU'},
     {'label': '日本語', 'value': 'ja', 'flag': 'JP'},
     {'label': '한국어', 'value': 'ko', 'flag': 'KR'},
-    {'label': '中文', 'value': 'zh', 'flag': 'CN'},
+    {'label': '中文 (简体)', 'value': 'zh', 'flag': 'CN'},
+    {'label': '中文 (繁體)', 'value': 'zh-tw', 'flag': 'TW'},
     {'label': 'العربية', 'value': 'ar', 'flag': 'SA'},
+    {'label': 'हिन्दी', 'value': 'hi', 'flag': 'IN'},
+    {'label': 'বাংলা', 'value': 'bn', 'flag': 'BD'},
+    {'label': 'اردو', 'value': 'ur', 'flag': 'PK'},
+    {'label': 'فارسی', 'value': 'fa', 'flag': 'IR'},
+    {'label': 'Nederlands', 'value': 'nl', 'flag': 'NL'},
+    {'label': 'Svenska', 'value': 'sv', 'flag': 'SE'},
+    {'label': 'Norsk', 'value': 'no', 'flag': 'NO'},
+    {'label': 'Dansk', 'value': 'da', 'flag': 'DK'},
+    {'label': 'Suomi', 'value': 'fi', 'flag': 'FI'},
+    {'label': 'Polski', 'value': 'pl', 'flag': 'PL'},
+    {'label': 'Čeština', 'value': 'cs', 'flag': 'CZ'},
+    {'label': 'Slovenčina', 'value': 'sk', 'flag': 'SK'},
+    {'label': 'Magyar', 'value': 'hu', 'flag': 'HU'},
+    {'label': 'Română', 'value': 'ro', 'flag': 'RO'},
+    {'label': 'Български', 'value': 'bg', 'flag': 'BG'},
+    {'label': 'Hrvatski', 'value': 'hr', 'flag': 'HR'},
+    {'label': 'Српски', 'value': 'sr', 'flag': 'RS'},
+    {'label': 'Slovenščina', 'value': 'sl', 'flag': 'SI'},
+    {'label': 'Lietuvių', 'value': 'lt', 'flag': 'LT'},
+    {'label': 'Latviešu', 'value': 'lv', 'flag': 'LV'},
+    {'label': 'Eesti', 'value': 'et', 'flag': 'EE'},
+    {'label': 'Ελληνικά', 'value': 'el', 'flag': 'GR'},
+    {'label': 'עברית', 'value': 'he', 'flag': 'IL'},
+    {'label': 'ไทย', 'value': 'th', 'flag': 'TH'},
+    {'label': 'Tiếng Việt', 'value': 'vi', 'flag': 'VN'},
+    {'label': 'Bahasa Indonesia', 'value': 'id', 'flag': 'ID'},
+    {'label': 'Bahasa Melayu', 'value': 'ms', 'flag': 'MY'},
+    {'label': 'Filipino', 'value': 'tl', 'flag': 'PH'},
+    {'label': 'Українська', 'value': 'uk', 'flag': 'UA'},
+    {'label': 'Беларуская', 'value': 'be', 'flag': 'BY'},
+    {'label': 'ქართული', 'value': 'ka', 'flag': 'GE'},
+    {'label': 'Հայերեն', 'value': 'hy', 'flag': 'AM'},
+    {'label': 'Azərbaycan', 'value': 'az', 'flag': 'AZ'},
+    {'label': 'Қазақ', 'value': 'kk', 'flag': 'KZ'},
+    {'label': 'O\'zbek', 'value': 'uz', 'flag': 'UZ'},
+    {'label': 'Кыргызча', 'value': 'ky', 'flag': 'KG'},
+    {'label': 'Тоҷикӣ', 'value': 'tg', 'flag': 'TJ'},
+    {'label': 'Türkmençe', 'value': 'tk', 'flag': 'TM'},
+    {'label': 'Монгол', 'value': 'mn', 'flag': 'MN'},
+    {'label': 'አማርኛ', 'value': 'am', 'flag': 'ET'},
+    {'label': 'Kiswahili', 'value': 'sw', 'flag': 'KE'},
+    {'label': 'Hausa', 'value': 'ha', 'flag': 'NG'},
+    {'label': 'Yorùbá', 'value': 'yo', 'flag': 'NG'},
+    {'label': 'Igbo', 'value': 'ig', 'flag': 'NG'},
+    {'label': 'isiZulu', 'value': 'zu', 'flag': 'ZA'},
+    {'label': 'Afrikaans', 'value': 'af', 'flag': 'ZA'},
+    {'label': 'Català', 'value': 'ca', 'flag': 'ES'},
+    {'label': 'Euskara', 'value': 'eu', 'flag': 'ES'},
+    {'label': 'Galego', 'value': 'gl', 'flag': 'ES'},
+    {'label': 'Gaeilge', 'value': 'ga', 'flag': 'IE'},
+    {'label': 'Gàidhlig', 'value': 'gd', 'flag': 'GB'},
+    {'label': 'Cymraeg', 'value': 'cy', 'flag': 'GB'},
+    {'label': 'Íslenska', 'value': 'is', 'flag': 'IS'},
+    {'label': 'Malti', 'value': 'mt', 'flag': 'MT'},
+    {'label': 'Corsu', 'value': 'co', 'flag': 'FR'},
+    {'label': 'Lëtzebuergesch', 'value': 'lb', 'flag': 'LU'},
+    {'label': 'Esperanto', 'value': 'eo', 'flag': 'UN'},
+    {'label': 'Latina', 'value': 'la', 'flag': 'VA'},
   ];
 
   TranslatorProvider() {
@@ -160,8 +279,126 @@ class TranslatorProvider with ChangeNotifier {
         return _getKoreanText(key);
       case 'zh':
         return _getChineseText(key);
+      case 'zh-tw':
+        return _getChineseTraditionalText(key);
       case 'ar':
         return _getArabicText(key);
+      case 'hi':
+        return _getHindiText(key);
+      case 'bn':
+        return _getBengaliText(key);
+      case 'ur':
+        return _getUrduText(key);
+      case 'fa':
+        return _getPersianText(key);
+      case 'nl':
+        return _getDutchText(key);
+      case 'sv':
+        return _getSwedishText(key);
+      case 'no':
+        return _getNorwegianText(key);
+      case 'da':
+        return _getDanishText(key);
+      case 'fi':
+        return _getFinnishText(key);
+      case 'pl':
+        return _getPolishText(key);
+      case 'cs':
+        return _getCzechText(key);
+      case 'sk':
+        return _getSlovakText(key);
+      case 'hu':
+        return _getHungarianText(key);
+      case 'ro':
+        return _getRomanianText(key);
+      case 'bg':
+        return _getBulgarianText(key);
+      case 'hr':
+        return _getCroatianText(key);
+      case 'sr':
+        return _getSerbianText(key);
+      case 'sl':
+        return _getSlovenianText(key);
+      case 'lt':
+        return _getLithuanianText(key);
+      case 'lv':
+        return _getLatvianText(key);
+      case 'et':
+        return _getEstonianText(key);
+      case 'el':
+        return _getGreekText(key);
+      case 'he':
+        return _getHebrewText(key);
+      case 'th':
+        return _getThaiText(key);
+      case 'vi':
+        return _getVietnameseText(key);
+      case 'id':
+        return _getIndonesianText(key);
+      case 'ms':
+        return _getMalayText(key);
+      case 'tl':
+        return _getFilipinoText(key);
+      case 'uk':
+        return _getUkrainianText(key);
+      case 'be':
+        return _getBelarusianText(key);
+      case 'ka':
+        return _getGeorgianText(key);
+      case 'hy':
+        return _getArmenianText(key);
+      case 'az':
+        return _getAzerbaijaniText(key);
+      case 'kk':
+        return _getKazakhText(key);
+      case 'uz':
+        return _getUzbekText(key);
+      case 'ky':
+        return _getKyrgyzText(key);
+      case 'tg':
+        return _getTajikText(key);
+      case 'tk':
+        return _getTurkmenText(key);
+      case 'mn':
+        return _getMongolianText(key);
+      case 'am':
+        return _getAmharicText(key);
+      case 'sw':
+        return _getSwahiliText(key);
+      case 'ha':
+        return _getHausaText(key);
+      case 'yo':
+        return _getYorubaText(key);
+      case 'ig':
+        return _getIgboText(key);
+      case 'zu':
+        return _getZuluText(key);
+      case 'af':
+        return _getAfrikaansText(key);
+      case 'ca':
+        return _getCatalanText(key);
+      case 'eu':
+        return _getBasqueText(key);
+      case 'gl':
+        return _getGalicianText(key);
+      case 'ga':
+        return _getIrishText(key);
+      case 'gd':
+        return _getScottishText(key);
+      case 'cy':
+        return _getWelshText(key);
+      case 'is':
+        return _getIcelandicText(key);
+      case 'mt':
+        return _getMalteseText(key);
+      case 'co':
+        return _getCorsicanText(key);
+      case 'lb':
+        return _getLuxembourgishText(key);
+      case 'eo':
+        return _getEsperantoText(key);
+      case 'la':
+        return _getLatinText(key);
       default:
         return _getTurkishText(key);
     }
@@ -209,6 +446,8 @@ class TranslatorProvider with ChangeNotifier {
         return 'Favorilerim';
       case 'no_favorites_yet':
         return 'Henüz Favori Yok';
+      case 'no_history_yet':
+        return 'Henüz çeviri geçmişi yok';
       case 'add_favorites_description':
         return 'Çevirilerinizi favorilere ekleyerek\ndaha sonra kolayca erişebilirsiniz';
       case 'add_from_translate_page':
@@ -562,13 +801,473 @@ class TranslatorProvider with ChangeNotifier {
     }
   }
 
-  String _getItalianText(String key) => _getEnglishText(key);
-  String _getPortugueseText(String key) => _getEnglishText(key);
-  String _getRussianText(String key) => _getEnglishText(key);
-  String _getJapaneseText(String key) => _getEnglishText(key);
-  String _getKoreanText(String key) => _getEnglishText(key);
-  String _getChineseText(String key) => _getEnglishText(key);
-  String _getArabicText(String key) => _getEnglishText(key);
+  String _getItalianText(String key) {
+    switch (key) {
+      case 'app_title':
+        return 'Voicely';
+      case 'translate':
+        return 'Traduci';
+      case 'camera':
+        return 'Fotocamera';
+      case 'history':
+        return 'Cronologia';
+      case 'favorites':
+        return 'Preferiti';
+      case 'source_language':
+        return 'Lingua di origine';
+      case 'target_language':
+        return 'Lingua di destinazione';
+      case 'enter_text':
+        return 'Inserisci testo...';
+      case 'translation':
+        return 'Traduzione...';
+      case 'speak':
+        return 'Parla';
+      case 'read':
+        return 'Leggi';
+      case 'add_to_favorites':
+        return 'Aggiungi ai preferiti';
+      case 'remove_from_favorites':
+        return 'Rimuovi dai preferiti';
+      case 'settings':
+        return 'Impostazioni';
+      case 'app_language':
+        return 'Lingua dell\'app';
+      case 'select_language':
+        return 'Seleziona lingua';
+      default:
+        return _getEnglishText(key);
+    }
+  }
+
+  String _getPortugueseText(String key) {
+    switch (key) {
+      case 'app_title':
+        return 'Voicely';
+      case 'translate':
+        return 'Traduzir';
+      case 'camera':
+        return 'Câmera';
+      case 'history':
+        return 'Histórico';
+      case 'favorites':
+        return 'Favoritos';
+      case 'source_language':
+        return 'Idioma de origem';
+      case 'target_language':
+        return 'Idioma de destino';
+      case 'enter_text':
+        return 'Digite o texto...';
+      case 'translation':
+        return 'Tradução...';
+      case 'speak':
+        return 'Falar';
+      case 'read':
+        return 'Ler';
+      case 'add_to_favorites':
+        return 'Adicionar aos favoritos';
+      case 'remove_from_favorites':
+        return 'Remover dos favoritos';
+      case 'settings':
+        return 'Configurações';
+      case 'app_language':
+        return 'Idioma do aplicativo';
+      case 'select_language':
+        return 'Selecionar idioma';
+      default:
+        return _getEnglishText(key);
+    }
+  }
+
+  String _getRussianText(String key) {
+    switch (key) {
+      case 'app_title':
+        return 'Voicely';
+      case 'translate':
+        return 'Перевести';
+      case 'camera':
+        return 'Камера';
+      case 'history':
+        return 'История';
+      case 'favorites':
+        return 'Избранное';
+      case 'source_language':
+        return 'Исходный язык';
+      case 'target_language':
+        return 'Целевой язык';
+      case 'enter_text':
+        return 'Введите текст...';
+      case 'translation':
+        return 'Перевод...';
+      case 'speak':
+        return 'Говорить';
+      case 'read':
+        return 'Читать';
+      case 'add_to_favorites':
+        return 'Добавить в избранное';
+      case 'remove_from_favorites':
+        return 'Удалить из избранного';
+      case 'settings':
+        return 'Настройки';
+      case 'app_language':
+        return 'Язык приложения';
+      case 'select_language':
+        return 'Выбрать язык';
+      default:
+        return _getEnglishText(key);
+    }
+  }
+
+  String _getJapaneseText(String key) {
+    switch (key) {
+      case 'app_title':
+        return 'Voicely';
+      case 'translate':
+        return '翻訳';
+      case 'camera':
+        return 'カメラ';
+      case 'history':
+        return '履歴';
+      case 'favorites':
+        return 'お気に入り';
+      case 'source_language':
+        return '元の言語';
+      case 'target_language':
+        return '対象言語';
+      case 'enter_text':
+        return 'テキストを入力...';
+      case 'translation':
+        return '翻訳...';
+      case 'speak':
+        return '話す';
+      case 'read':
+        return '読む';
+      case 'add_to_favorites':
+        return 'お気に入りに追加';
+      case 'remove_from_favorites':
+        return 'お気に入りから削除';
+      case 'settings':
+        return '設定';
+      case 'app_language':
+        return 'アプリの言語';
+      case 'select_language':
+        return '言語を選択';
+      default:
+        return _getEnglishText(key);
+    }
+  }
+
+  String _getKoreanText(String key) {
+    switch (key) {
+      case 'app_title':
+        return 'Voicely';
+      case 'translate':
+        return '번역';
+      case 'camera':
+        return '카메라';
+      case 'history':
+        return '기록';
+      case 'favorites':
+        return '즐겨찾기';
+      case 'source_language':
+        return '원본 언어';
+      case 'target_language':
+        return '대상 언어';
+      case 'enter_text':
+        return '텍스트 입력...';
+      case 'translation':
+        return '번역...';
+      case 'speak':
+        return '말하기';
+      case 'read':
+        return '읽기';
+      case 'add_to_favorites':
+        return '즐겨찾기에 추가';
+      case 'remove_from_favorites':
+        return '즐겨찾기에서 제거';
+      case 'settings':
+        return '설정';
+      case 'app_language':
+        return '앱 언어';
+      case 'select_language':
+        return '언어 선택';
+      default:
+        return _getEnglishText(key);
+    }
+  }
+
+  String _getChineseText(String key) {
+    switch (key) {
+      case 'app_title':
+        return 'Voicely';
+      case 'translate':
+        return '翻译';
+      case 'camera':
+        return '相机';
+      case 'history':
+        return '历史';
+      case 'favorites':
+        return '收藏';
+      case 'source_language':
+        return '源语言';
+      case 'target_language':
+        return '目标语言';
+      case 'enter_text':
+        return '输入文本...';
+      case 'translation':
+        return '翻译...';
+      case 'speak':
+        return '说话';
+      case 'read':
+        return '阅读';
+      case 'add_to_favorites':
+        return '添加到收藏';
+      case 'remove_from_favorites':
+        return '从收藏中移除';
+      case 'settings':
+        return '设置';
+      case 'app_language':
+        return '应用语言';
+      case 'select_language':
+        return '选择语言';
+      default:
+        return _getEnglishText(key);
+    }
+  }
+
+  String _getChineseTraditionalText(String key) {
+    switch (key) {
+      case 'app_title':
+        return 'Voicely';
+      case 'translate':
+        return '翻譯';
+      case 'camera':
+        return '相機';
+      case 'history':
+        return '歷史';
+      case 'favorites':
+        return '收藏';
+      case 'source_language':
+        return '源語言';
+      case 'target_language':
+        return '目標語言';
+      case 'enter_text':
+        return '輸入文本...';
+      case 'translation':
+        return '翻譯...';
+      case 'speak':
+        return '說話';
+      case 'read':
+        return '閱讀';
+      case 'add_to_favorites':
+        return '添加到收藏';
+      case 'remove_from_favorites':
+        return '從收藏中移除';
+      case 'settings':
+        return '設置';
+      case 'app_language':
+        return '應用語言';
+      case 'select_language':
+        return '選擇語言';
+      default:
+        return _getEnglishText(key);
+    }
+  }
+
+  String _getArabicText(String key) {
+    switch (key) {
+      case 'app_title':
+        return 'Voicely';
+      case 'translate':
+        return 'ترجم';
+      case 'camera':
+        return 'الكاميرا';
+      case 'history':
+        return 'التاريخ';
+      case 'favorites':
+        return 'المفضلة';
+      case 'source_language':
+        return 'اللغة المصدر';
+      case 'target_language':
+        return 'اللغة الهدف';
+      case 'enter_text':
+        return 'أدخل النص...';
+      case 'translation':
+        return 'الترجمة...';
+      case 'speak':
+        return 'تحدث';
+      case 'read':
+        return 'اقرأ';
+      case 'add_to_favorites':
+        return 'إضافة إلى المفضلة';
+      case 'remove_from_favorites':
+        return 'إزالة من المفضلة';
+      case 'settings':
+        return 'الإعدادات';
+      case 'app_language':
+        return 'لغة التطبيق';
+      case 'select_language':
+        return 'اختر اللغة';
+      default:
+        return _getEnglishText(key);
+    }
+  }
+
+  String _getHindiText(String key) {
+    switch (key) {
+      case 'app_title':
+        return 'Voicely';
+      case 'translate':
+        return 'अनुवाद करें';
+      case 'camera':
+        return 'कैमरा';
+      case 'history':
+        return 'इतिहास';
+      case 'favorites':
+        return 'पसंदीदा';
+      case 'source_language':
+        return 'स्रोत भाषा';
+      case 'target_language':
+        return 'लक्ष्य भाषा';
+      case 'enter_text':
+        return 'टेक्स्ट दर्ज करें...';
+      case 'translation':
+        return 'अनुवाद...';
+      case 'speak':
+        return 'बोलें';
+      case 'read':
+        return 'पढ़ें';
+      case 'add_to_favorites':
+        return 'पसंदीदा में जोड़ें';
+      case 'remove_from_favorites':
+        return 'पसंदीदा से हटाएं';
+      case 'settings':
+        return 'सेटिंग्स';
+      case 'app_language':
+        return 'ऐप भाषा';
+      case 'select_language':
+        return 'भाषा चुनें';
+      default:
+        return _getEnglishText(key);
+    }
+  }
+
+  String _getDutchText(String key) {
+    switch (key) {
+      case 'app_title':
+        return 'Voicely';
+      case 'translate':
+        return 'Vertalen';
+      case 'camera':
+        return 'Camera';
+      case 'history':
+        return 'Geschiedenis';
+      case 'favorites':
+        return 'Favorieten';
+      case 'source_language':
+        return 'Brontaal';
+      case 'target_language':
+        return 'Doeltaal';
+      case 'enter_text':
+        return 'Voer tekst in...';
+      case 'translation':
+        return 'Vertaling...';
+      case 'speak':
+        return 'Spreken';
+      case 'read':
+        return 'Lezen';
+      case 'add_to_favorites':
+        return 'Toevoegen aan favorieten';
+      case 'remove_from_favorites':
+        return 'Verwijderen uit favorieten';
+      case 'settings':
+        return 'Instellingen';
+      case 'app_language':
+        return 'App-taal';
+      case 'select_language':
+        return 'Taal selecteren';
+      default:
+        return _getEnglishText(key);
+    }
+  }
+
+  String _getPolishText(String key) {
+    switch (key) {
+      case 'app_title':
+        return 'Voicely';
+      case 'translate':
+        return 'Tłumacz';
+      case 'camera':
+        return 'Kamera';
+      case 'history':
+        return 'Historia';
+      case 'favorites':
+        return 'Ulubione';
+      case 'source_language':
+        return 'Język źródłowy';
+      case 'target_language':
+        return 'Język docelowy';
+      case 'enter_text':
+        return 'Wprowadź tekst...';
+      case 'translation':
+        return 'Tłumaczenie...';
+      case 'speak':
+        return 'Mów';
+      case 'read':
+        return 'Czytaj';
+      case 'add_to_favorites':
+        return 'Dodaj do ulubionych';
+      case 'remove_from_favorites':
+        return 'Usuń z ulubionych';
+      case 'settings':
+        return 'Ustawienia';
+      case 'app_language':
+        return 'Język aplikacji';
+      case 'select_language':
+        return 'Wybierz język';
+      default:
+        return _getEnglishText(key);
+    }
+  }
+
+  String _getUkrainianText(String key) {
+    switch (key) {
+      case 'app_title':
+        return 'Voicely';
+      case 'translate':
+        return 'Перекласти';
+      case 'camera':
+        return 'Камера';
+      case 'history':
+        return 'Історія';
+      case 'favorites':
+        return 'Обране';
+      case 'source_language':
+        return 'Мова джерела';
+      case 'target_language':
+        return 'Цільова мова';
+      case 'enter_text':
+        return 'Введіть текст...';
+      case 'translation':
+        return 'Переклад...';
+      case 'speak':
+        return 'Говорити';
+      case 'read':
+        return 'Читати';
+      case 'add_to_favorites':
+        return 'Додати в обране';
+      case 'remove_from_favorites':
+        return 'Видалити з обраного';
+      case 'settings':
+        return 'Налаштування';
+      case 'app_language':
+        return 'Мова додатку';
+      case 'select_language':
+        return 'Вибрати мову';
+      default:
+        return _getEnglishText(key);
+    }
+  }
 
   Future<void> startRecording() async {
     print('startRecording called');
@@ -628,7 +1327,7 @@ class TranslatorProvider with ChangeNotifier {
     // Dil kodlarını speech-to-text için uygun locale ID'lere çevir
     switch (langCode) {
       case 'tr':
-        return 'tr-TR'; // Türkçe için doğru format
+        return 'tr-TR';
       case 'en':
         return 'en-US';
       case 'de':
@@ -649,8 +1348,126 @@ class TranslatorProvider with ChangeNotifier {
         return 'ko-KR';
       case 'zh':
         return 'zh-CN';
+      case 'zh-tw':
+        return 'zh-TW';
       case 'ar':
         return 'ar-SA';
+      case 'hi':
+        return 'hi-IN';
+      case 'bn':
+        return 'bn-BD';
+      case 'ur':
+        return 'ur-PK';
+      case 'fa':
+        return 'fa-IR';
+      case 'nl':
+        return 'nl-NL';
+      case 'sv':
+        return 'sv-SE';
+      case 'no':
+        return 'no-NO';
+      case 'da':
+        return 'da-DK';
+      case 'fi':
+        return 'fi-FI';
+      case 'pl':
+        return 'pl-PL';
+      case 'cs':
+        return 'cs-CZ';
+      case 'sk':
+        return 'sk-SK';
+      case 'hu':
+        return 'hu-HU';
+      case 'ro':
+        return 'ro-RO';
+      case 'bg':
+        return 'bg-BG';
+      case 'hr':
+        return 'hr-HR';
+      case 'sr':
+        return 'sr-RS';
+      case 'sl':
+        return 'sl-SI';
+      case 'lt':
+        return 'lt-LT';
+      case 'lv':
+        return 'lv-LV';
+      case 'et':
+        return 'et-EE';
+      case 'el':
+        return 'el-GR';
+      case 'he':
+        return 'he-IL';
+      case 'th':
+        return 'th-TH';
+      case 'vi':
+        return 'vi-VN';
+      case 'id':
+        return 'id-ID';
+      case 'ms':
+        return 'ms-MY';
+      case 'tl':
+        return 'tl-PH';
+      case 'uk':
+        return 'uk-UA';
+      case 'be':
+        return 'be-BY';
+      case 'ka':
+        return 'ka-GE';
+      case 'hy':
+        return 'hy-AM';
+      case 'az':
+        return 'az-AZ';
+      case 'kk':
+        return 'kk-KZ';
+      case 'uz':
+        return 'uz-UZ';
+      case 'ky':
+        return 'ky-KG';
+      case 'tg':
+        return 'tg-TJ';
+      case 'tk':
+        return 'tk-TM';
+      case 'mn':
+        return 'mn-MN';
+      case 'am':
+        return 'am-ET';
+      case 'sw':
+        return 'sw-KE';
+      case 'ha':
+        return 'ha-NG';
+      case 'yo':
+        return 'yo-NG';
+      case 'ig':
+        return 'ig-NG';
+      case 'zu':
+        return 'zu-ZA';
+      case 'af':
+        return 'af-ZA';
+      case 'ca':
+        return 'ca-ES';
+      case 'eu':
+        return 'eu-ES';
+      case 'gl':
+        return 'gl-ES';
+      case 'ga':
+        return 'ga-IE';
+      case 'gd':
+        return 'gd-GB';
+      case 'cy':
+        return 'cy-GB';
+      case 'is':
+        return 'is-IS';
+      case 'mt':
+        return 'mt-MT';
+      case 'co':
+        return 'co-FR';
+      case 'lb':
+        return 'lb-LU';
+      case 'eo':
+        return 'eo-XX';
+      case 'la':
+        return 'la-VA';
       default:
         return 'en-US';
     }
@@ -677,6 +1494,12 @@ class TranslatorProvider with ChangeNotifier {
     // Yeni metin girildiğinde geçmiş debounce timer'ını iptal et
     _historyDebounceTimer?.cancel();
     
+    // Eğer metin boşsa çeviriyi de temizle
+    if (text.isEmpty) {
+      _translatedText = '';
+      _isTranslating = false;
+    }
+    
     notifyListeners();
     _debounceTranslate();
   }
@@ -686,6 +1509,11 @@ class TranslatorProvider with ChangeNotifier {
     _debounceTimer = Timer(const Duration(milliseconds: 200), () {
       if (_inputText.isNotEmpty) {
         translateText();
+      } else {
+        // Metin boşsa çeviriyi temizle
+        _translatedText = '';
+        _isTranslating = false;
+        notifyListeners();
       }
     });
   }
@@ -732,29 +1560,66 @@ class TranslatorProvider with ChangeNotifier {
     notifyListeners();
     
     try {
+      // LibreTranslate API kullanımı (ücretsiz)
       final response = await http.post(
-        Uri.parse('https://translate.googleapis.com/translate_a/single'),
+        Uri.parse('https://libretranslate.de/translate'),
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Type': 'application/json',
         },
-        body: {
-          'client': 'gtx',
-          'sl': _fromLang,
-          'tl': _toLang,
-          'dt': 't',
+        body: json.encode({
           'q': _inputText,
-        },
+          'source': _fromLang,
+          'target': _toLang,
+          'format': 'text',
+        }),
       );
       
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        if (data[0] != null && data[0].isNotEmpty) {
-          _translatedText = data[0][0][0];
+        if (data['translatedText'] != null) {
+          _translatedText = data['translatedText'];
           _addToHistory();
           _updateFavoriteStatus();
           
           // Çeviri tamamlandığında hedef dilden metni oku
           await speak(_translatedText, _toLang);
+        } else {
+          _translatedText = 'Çeviri bulunamadı';
+        }
+      } else {
+        // Fallback olarak MyMemory API kullan
+        await _translateWithMyMemory();
+      }
+    } catch (e) {
+      // Fallback olarak MyMemory API kullan
+      await _translateWithMyMemory();
+    }
+    
+    _isTranslating = false;
+    notifyListeners();
+  }
+
+  Future<void> _translateWithMyMemory() async {
+    try {
+      final response = await http.get(
+        Uri.parse('https://api.mymemory.translated.net/get')
+            .replace(queryParameters: {
+          'q': _inputText,
+          'langpair': '$_fromLang|$_toLang',
+        }),
+      );
+      
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['responseData'] != null && data['responseData']['translatedText'] != null) {
+          _translatedText = data['responseData']['translatedText'];
+          _addToHistory();
+          _updateFavoriteStatus();
+          
+          // Çeviri tamamlandığında hedef dilden metni oku
+          await speak(_translatedText, _toLang);
+        } else {
+          _translatedText = 'Çeviri bulunamadı';
         }
       } else {
         _translatedText = 'Çeviri hatası: ${response.statusCode}';
@@ -762,9 +1627,6 @@ class TranslatorProvider with ChangeNotifier {
     } catch (e) {
       _translatedText = 'Çeviri hatası: $e';
     }
-    
-    _isTranslating = false;
-    notifyListeners();
   }
 
   void _addToHistory() {
@@ -942,12 +1804,18 @@ class TranslatorProvider with ChangeNotifier {
   }
 
   Future<void> speak(String text, String language) async {
+    // Önceki speak işlemini iptal et
+    _speakDebounceTimer?.cancel();
+    
+    // 1 saniye bekle ve sonra konuş
+    _speakDebounceTimer = Timer(const Duration(seconds: 1), () async {
     try {
       await _flutterTts.setLanguage(_getTtsLanguage(language));
       await _flutterTts.speak(text);
     } catch (e) {
       print('Error speaking: $e');
     }
+    });
   }
 
   String _getTtsLanguage(String langCode) {
@@ -974,17 +1842,725 @@ class TranslatorProvider with ChangeNotifier {
         return 'ko-KR';
       case 'zh':
         return 'zh-CN';
+      case 'zh-tw':
+        return 'zh-TW';
       case 'ar':
         return 'ar-SA';
+      case 'hi':
+        return 'hi-IN';
+      case 'bn':
+        return 'bn-BD';
+      case 'ur':
+        return 'ur-PK';
+      case 'fa':
+        return 'fa-IR';
+      case 'nl':
+        return 'nl-NL';
+      case 'sv':
+        return 'sv-SE';
+      case 'no':
+        return 'no-NO';
+      case 'da':
+        return 'da-DK';
+      case 'fi':
+        return 'fi-FI';
+      case 'pl':
+        return 'pl-PL';
+      case 'cs':
+        return 'cs-CZ';
+      case 'sk':
+        return 'sk-SK';
+      case 'hu':
+        return 'hu-HU';
+      case 'ro':
+        return 'ro-RO';
+      case 'bg':
+        return 'bg-BG';
+      case 'hr':
+        return 'hr-HR';
+      case 'sr':
+        return 'sr-RS';
+      case 'sl':
+        return 'sl-SI';
+      case 'lt':
+        return 'lt-LT';
+      case 'lv':
+        return 'lv-LV';
+      case 'et':
+        return 'et-EE';
+      case 'el':
+        return 'el-GR';
+      case 'he':
+        return 'he-IL';
+      case 'th':
+        return 'th-TH';
+      case 'vi':
+        return 'vi-VN';
+      case 'id':
+        return 'id-ID';
+      case 'ms':
+        return 'ms-MY';
+      case 'tl':
+        return 'tl-PH';
+      case 'uk':
+        return 'uk-UA';
+      case 'be':
+        return 'be-BY';
+      case 'ka':
+        return 'ka-GE';
+      case 'hy':
+        return 'hy-AM';
+      case 'az':
+        return 'az-AZ';
+      case 'kk':
+        return 'kk-KZ';
+      case 'uz':
+        return 'uz-UZ';
+      case 'ky':
+        return 'ky-KG';
+      case 'tg':
+        return 'tg-TJ';
+      case 'tk':
+        return 'tk-TM';
+      case 'mn':
+        return 'mn-MN';
+      case 'am':
+        return 'am-ET';
+      case 'sw':
+        return 'sw-KE';
+      case 'ha':
+        return 'ha-NG';
+      case 'yo':
+        return 'yo-NG';
+      case 'ig':
+        return 'ig-NG';
+      case 'zu':
+        return 'zu-ZA';
+      case 'af':
+        return 'af-ZA';
+      case 'ca':
+        return 'ca-ES';
+      case 'eu':
+        return 'eu-ES';
+      case 'gl':
+        return 'gl-ES';
+      case 'ga':
+        return 'ga-IE';
+      case 'gd':
+        return 'gd-GB';
+      case 'cy':
+        return 'cy-GB';
+      case 'is':
+        return 'is-IS';
+      case 'mt':
+        return 'mt-MT';
+      case 'co':
+        return 'co-FR';
+      case 'lb':
+        return 'lb-LU';
+      case 'eo':
+        return 'eo-XX';
+      case 'la':
+        return 'la-VA';
       default:
         return 'en-US';
     }
   }
 
+  // Eksik dil fonksiyonları
+  String _getBengaliText(String key) {
+    switch (key) {
+      case 'app_title':
+        return 'Voicely';
+      case 'translate':
+        return 'অনুবাদ';
+      case 'camera':
+        return 'ক্যামেরা';
+      case 'history':
+        return 'ইতিহাস';
+      case 'favorites':
+        return 'প্রিয়';
+      case 'source_language':
+        return 'উৎস ভাষা';
+      case 'target_language':
+        return 'লক্ষ্য ভাষা';
+      case 'enter_text':
+        return 'টেক্সট লিখুন...';
+      case 'translation':
+        return 'অনুবাদ...';
+      case 'speak':
+        return 'কথা বলুন';
+      case 'read':
+        return 'পড়ুন';
+      case 'add_to_favorites':
+        return 'প্রিয়তে যোগ করুন';
+      case 'remove_from_favorites':
+        return 'প্রিয় থেকে সরান';
+      case 'camera_translation':
+        return 'ক্যামেরা অনুবাদ';
+      case 'coming_soon':
+        return 'শীঘ্রই আসছে...';
+      case 'text_recognition':
+        return 'টেক্সট স্বীকৃতি এবং অনুবাদ বৈশিষ্ট্য';
+      case 'translation_history':
+        return 'অনুবাদ ইতিহাস';
+      case 'view_recent_translations':
+        return 'আপনার সাম্প্রতিক অনুবাদগুলি দেখুন';
+      case 'my_favorites':
+        return 'আমার প্রিয়';
+      case 'no_favorites_yet':
+        return 'এখনও কোন প্রিয় নেই';
+      case 'add_favorites_description':
+        return 'আপনার অনুবাদগুলি প্রিয়তে যোগ করুন\nপরে সহজে অ্যাক্সেস করতে';
+      case 'add_from_translate_page':
+        return 'অনুবাদ পৃষ্ঠা থেকে প্রিয় যোগ করুন';
+      case 'clear_history':
+        return 'ইতিহাস মুছুন';
+      case 'clear_history_confirm':
+        return 'আপনি কি নিশ্চিত যে আপনি সমস্ত ইতিহাস মুছতে চান?';
+      case 'cancel':
+        return 'বাতিল';
+      case 'confirm':
+        return 'নিশ্চিত করুন';
+      case 'settings':
+        return 'সেটিংস';
+      case 'language':
+        return 'ভাষা';
+      case 'app_language':
+        return 'অ্যাপ ভাষা';
+      case 'select_language':
+        return 'ভাষা নির্বাচন করুন';
+      case 'about':
+        return 'সম্পর্কে';
+      case 'version':
+        return 'সংস্করণ';
+      case 'developed_by':
+        return 'দ্বারা বিকশিত';
+      case 'privacy_policy':
+        return 'গোপনীয়তা নীতি';
+      case 'terms_of_service':
+        return 'সেবার শর্তাবলী';
+      default:
+        return _getEnglishText(key);
+    }
+  }
+
+  String _getUrduText(String key) {
+    switch (key) {
+      case 'app_title':
+        return 'Voicely';
+      case 'translate':
+        return 'ترجمہ';
+      case 'camera':
+        return 'کیمرا';
+      case 'history':
+        return 'تاریخ';
+      case 'favorites':
+        return 'پسندیدہ';
+      case 'source_language':
+        return 'ماخذ زبان';
+      case 'target_language':
+        return 'ہدف زبان';
+      case 'enter_text':
+        return 'ٹیکسٹ درج کریں...';
+      case 'translation':
+        return 'ترجمہ...';
+      case 'speak':
+        return 'بولنا';
+      case 'read':
+        return 'پڑھنا';
+      case 'add_to_favorites':
+        return 'پسندیدہ میں شامل کریں';
+      case 'remove_from_favorites':
+        return 'پسندیدہ سے ہٹائیں';
+      case 'camera_translation':
+        return 'کیمرا ترجمہ';
+      case 'coming_soon':
+        return 'جلد آ رہا ہے...';
+      case 'text_recognition':
+        return 'ٹیکسٹ شناخت اور ترجمہ خصوصیت';
+      case 'translation_history':
+        return 'ترجمہ کی تاریخ';
+      case 'view_recent_translations':
+        return 'اپنے حالیہ تراجم دیکھیں';
+      case 'my_favorites':
+        return 'میری پسندیدہ';
+      case 'no_favorites_yet':
+        return 'ابھی تک کوئی پسندیدہ نہیں';
+      case 'add_favorites_description':
+        return 'اپنے تراجم کو پسندیدہ میں شامل کریں\nبعد میں آسانی سے رسائی حاصل کرنے کے لیے';
+      case 'add_from_translate_page':
+        return 'ترجمہ صفحہ سے پسندیدہ شامل کریں';
+      case 'clear_history':
+        return 'تاریخ صاف کریں';
+      case 'clear_history_confirm':
+        return 'کیا آپ یقینی ہیں کہ آپ تمام تاریخ صاف کرنا چاہتے ہیں؟';
+      case 'cancel':
+        return 'منسوخ';
+      case 'confirm':
+        return 'تصدیق کریں';
+      case 'settings':
+        return 'ترتیبات';
+      case 'language':
+        return 'زبان';
+      case 'app_language':
+        return 'ایپ زبان';
+      case 'select_language':
+        return 'زبان منتخب کریں';
+      case 'about':
+        return 'کے بارے میں';
+      case 'version':
+        return 'ورژن';
+      case 'developed_by':
+        return 'کی طرف سے تیار';
+      case 'privacy_policy':
+        return 'رازداری کی پالیسی';
+      case 'terms_of_service':
+        return 'سروس کی شرائط';
+      default:
+        return _getEnglishText(key);
+    }
+  }
+
+  String _getPersianText(String key) {
+    switch (key) {
+      case 'app_title':
+        return 'Voicely';
+      case 'translate':
+        return 'ترجمه';
+      case 'camera':
+        return 'دوربین';
+      case 'history':
+        return 'تاریخچه';
+      case 'favorites':
+        return 'مورد علاقه';
+      case 'source_language':
+        return 'زبان مبدا';
+      case 'target_language':
+        return 'زبان مقصد';
+      case 'enter_text':
+        return 'متن را وارد کنید...';
+      case 'translation':
+        return 'ترجمه...';
+      case 'speak':
+        return 'صحبت کردن';
+      case 'read':
+        return 'خواندن';
+      case 'add_to_favorites':
+        return 'به مورد علاقه اضافه کنید';
+      case 'remove_from_favorites':
+        return 'از مورد علاقه حذف کنید';
+      case 'camera_translation':
+        return 'ترجمه دوربین';
+      case 'coming_soon':
+        return 'به زودی...';
+      case 'text_recognition':
+        return 'ویژگی تشخیص متن و ترجمه';
+      case 'translation_history':
+        return 'تاریخچه ترجمه';
+      case 'view_recent_translations':
+        return 'ترجمه‌های اخیر خود را مشاهده کنید';
+      case 'my_favorites':
+        return 'مورد علاقه‌های من';
+      case 'no_favorites_yet':
+        return 'هنوز مورد علاقه‌ای وجود ندارد';
+      case 'add_favorites_description':
+        return 'ترجمه‌های خود را به مورد علاقه اضافه کنید\nبرای دسترسی آسان بعداً';
+      case 'add_from_translate_page':
+        return 'از صفحه ترجمه مورد علاقه اضافه کنید';
+      case 'clear_history':
+        return 'پاک کردن تاریخچه';
+      case 'clear_history_confirm':
+        return 'آیا مطمئن هستید که می‌خواهید تمام تاریخچه را پاک کنید؟';
+      case 'cancel':
+        return 'لغو';
+      case 'confirm':
+        return 'تایید';
+      case 'settings':
+        return 'تنظیمات';
+      case 'language':
+        return 'زبان';
+      case 'app_language':
+        return 'زبان برنامه';
+      case 'select_language':
+        return 'زبان را انتخاب کنید';
+      case 'about':
+        return 'درباره';
+      case 'version':
+        return 'نسخه';
+      case 'developed_by':
+        return 'توسعه یافته توسط';
+      case 'privacy_policy':
+        return 'سیاست حفظ حریم خصوصی';
+      case 'terms_of_service':
+        return 'شرایط خدمات';
+      default:
+        return _getEnglishText(key);
+    }
+  }
+
+  String _getSwedishText(String key) {
+    switch (key) {
+      case 'app_title':
+        return 'Voicely';
+      case 'translate':
+        return 'Översätt';
+      case 'camera':
+        return 'Kamera';
+      case 'history':
+        return 'Historik';
+      case 'favorites':
+        return 'Favoriter';
+      case 'source_language':
+        return 'Källspråk';
+      case 'target_language':
+        return 'Målspråk';
+      case 'enter_text':
+        return 'Ange text...';
+      case 'translation':
+        return 'Översättning...';
+      case 'speak':
+        return 'Tala';
+      case 'read':
+        return 'Läs';
+      case 'add_to_favorites':
+        return 'Lägg till i favoriter';
+      case 'remove_from_favorites':
+        return 'Ta bort från favoriter';
+      case 'camera_translation':
+        return 'Kameraöversättning';
+      case 'coming_soon':
+        return 'Kommer snart...';
+      case 'text_recognition':
+        return 'Textigenkänning och översättningsfunktion';
+      case 'translation_history':
+        return 'Översättningshistorik';
+      case 'view_recent_translations':
+        return 'Visa dina senaste översättningar';
+      case 'my_favorites':
+        return 'Mina favoriter';
+      case 'no_favorites_yet':
+        return 'Inga favoriter än';
+      case 'add_favorites_description':
+        return 'Lägg till dina översättningar i favoriter\nför enkel åtkomst senare';
+      case 'add_from_translate_page':
+        return 'Lägg till favorit från översättningssidan';
+      case 'clear_history':
+        return 'Rensa historik';
+      case 'clear_history_confirm':
+        return 'Är du säker på att du vill rensa all historik?';
+      case 'cancel':
+        return 'Avbryt';
+      case 'confirm':
+        return 'Bekräfta';
+      case 'settings':
+        return 'Inställningar';
+      case 'language':
+        return 'Språk';
+      case 'app_language':
+        return 'App-språk';
+      case 'select_language':
+        return 'Välj språk';
+      case 'about':
+        return 'Om';
+      case 'version':
+        return 'Version';
+      case 'developed_by':
+        return 'Utvecklad av';
+      case 'privacy_policy':
+        return 'Integritetspolicy';
+      case 'terms_of_service':
+        return 'Användarvillkor';
+      default:
+        return _getEnglishText(key);
+    }
+  }
+
+  String _getNorwegianText(String key) {
+    switch (key) {
+      case 'app_title':
+        return 'Voicely';
+      case 'translate':
+        return 'Oversett';
+      case 'camera':
+        return 'Kamera';
+      case 'history':
+        return 'Historikk';
+      case 'favorites':
+        return 'Favoritter';
+      case 'source_language':
+        return 'Kildespråk';
+      case 'target_language':
+        return 'Målspråk';
+      case 'enter_text':
+        return 'Skriv inn tekst...';
+      case 'translation':
+        return 'Oversettelse...';
+      case 'speak':
+        return 'Snakk';
+      case 'read':
+        return 'Les';
+      case 'add_to_favorites':
+        return 'Legg til i favoritter';
+      case 'remove_from_favorites':
+        return 'Fjern fra favoritter';
+      case 'camera_translation':
+        return 'Kameraoversettelse';
+      case 'coming_soon':
+        return 'Kommer snart...';
+      case 'text_recognition':
+        return 'Tekstgjenkjenning og oversettelsesfunksjon';
+      case 'translation_history':
+        return 'Oversettelseshistorikk';
+      case 'view_recent_translations':
+        return 'Se dine siste oversettelser';
+      case 'my_favorites':
+        return 'Mine favoritter';
+      case 'no_favorites_yet':
+        return 'Ingen favoritter ennå';
+      case 'add_favorites_description':
+        return 'Legg til oversettelsene dine i favoritter\nfor enkel tilgang senere';
+      case 'add_from_translate_page':
+        return 'Legg til favoritt fra oversettelsessiden';
+      case 'clear_history':
+        return 'Tøm historikk';
+      case 'clear_history_confirm':
+        return 'Er du sikker på at du vil tømme all historikk?';
+      case 'cancel':
+        return 'Avbryt';
+      case 'confirm':
+        return 'Bekreft';
+      case 'settings':
+        return 'Innstillinger';
+      case 'language':
+        return 'Språk';
+      case 'app_language':
+        return 'App-språk';
+      case 'select_language':
+        return 'Velg språk';
+      case 'about':
+        return 'Om';
+      case 'version':
+        return 'Versjon';
+      case 'developed_by':
+        return 'Utviklet av';
+      case 'privacy_policy':
+        return 'Personvernpolicy';
+      case 'terms_of_service':
+        return 'Brukervilkår';
+      default:
+        return _getEnglishText(key);
+    }
+  }
+
+  String _getDanishText(String key) {
+    switch (key) {
+      case 'app_title':
+        return 'Voicely';
+      case 'translate':
+        return 'Oversæt';
+      case 'camera':
+        return 'Kamera';
+      case 'history':
+        return 'Historik';
+      case 'favorites':
+        return 'Favoritter';
+      case 'source_language':
+        return 'Kildesprog';
+      case 'target_language':
+        return 'Målsprog';
+      case 'enter_text':
+        return 'Indtast tekst...';
+      case 'translation':
+        return 'Oversættelse...';
+      case 'speak':
+        return 'Tal';
+      case 'read':
+        return 'Læs';
+      case 'add_to_favorites':
+        return 'Tilføj til favoritter';
+      case 'remove_from_favorites':
+        return 'Fjern fra favoritter';
+      case 'camera_translation':
+        return 'Kameraoversættelse';
+      case 'coming_soon':
+        return 'Kommer snart...';
+      case 'text_recognition':
+        return 'Tekstgenkendelse og oversættelsesfunktion';
+      case 'translation_history':
+        return 'Oversættelseshistorik';
+      case 'view_recent_translations':
+        return 'Se dine seneste oversættelser';
+      case 'my_favorites':
+        return 'Mine favoritter';
+      case 'no_favorites_yet':
+        return 'Ingen favoritter endnu';
+      case 'add_favorites_description':
+        return 'Tilføj dine oversættelser til favoritter\nfor nem adgang senere';
+      case 'add_from_translate_page':
+        return 'Tilføj favorit fra oversættelsessiden';
+      case 'clear_history':
+        return 'Ryd historik';
+      case 'clear_history_confirm':
+        return 'Er du sikker på, at du vil rydde al historik?';
+      case 'cancel':
+        return 'Annuller';
+      case 'confirm':
+        return 'Bekræft';
+      case 'settings':
+        return 'Indstillinger';
+      case 'language':
+        return 'Sprog';
+      case 'app_language':
+        return 'App-sprog';
+      case 'select_language':
+        return 'Vælg sprog';
+      case 'about':
+        return 'Om';
+      case 'version':
+        return 'Version';
+      case 'developed_by':
+        return 'Udviklet af';
+      case 'privacy_policy':
+        return 'Privatlivspolitik';
+      case 'terms_of_service':
+        return 'Brugervilkår';
+      default:
+        return _getEnglishText(key);
+    }
+  }
+
+  String _getFinnishText(String key) {
+    switch (key) {
+      case 'app_title':
+        return 'Voicely';
+      case 'translate':
+        return 'Käännä';
+      case 'camera':
+        return 'Kamera';
+      case 'history':
+        return 'Historia';
+      case 'favorites':
+        return 'Suosikit';
+      case 'source_language':
+        return 'Lähdekieli';
+      case 'target_language':
+        return 'Kohdekieli';
+      case 'enter_text':
+        return 'Kirjoita teksti...';
+      case 'translation':
+        return 'Käännös...';
+      case 'speak':
+        return 'Puhu';
+      case 'read':
+        return 'Lue';
+      case 'add_to_favorites':
+        return 'Lisää suosikkeihin';
+      case 'remove_from_favorites':
+        return 'Poista suosikeista';
+      case 'camera_translation':
+        return 'Kamerakäännös';
+      case 'coming_soon':
+        return 'Tulossa pian...';
+      case 'text_recognition':
+        return 'Tekstintunnistus ja käännösominaisuus';
+      case 'translation_history':
+        return 'Käännöshistoria';
+      case 'view_recent_translations':
+        return 'Katso viimeisimmät käännöksesi';
+      case 'my_favorites':
+        return 'Suosikkini';
+      case 'no_favorites_yet':
+        return 'Ei vielä suosikkeja';
+      case 'add_favorites_description':
+        return 'Lisää käännöksesi suosikkeihin\nhelppoa pääsyä varten myöhemmin';
+      case 'add_from_translate_page':
+        return 'Lisää suosikki käännössivulta';
+      case 'clear_history':
+        return 'Tyhjennä historia';
+      case 'clear_history_confirm':
+        return 'Oletko varma, että haluat tyhjentää kaiken historian?';
+      case 'cancel':
+        return 'Peruuta';
+      case 'confirm':
+        return 'Vahvista';
+      case 'settings':
+        return 'Asetukset';
+      case 'language':
+        return 'Kieli';
+      case 'app_language':
+        return 'Sovelluksen kieli';
+      case 'select_language':
+        return 'Valitse kieli';
+      case 'about':
+        return 'Tietoja';
+      case 'version':
+        return 'Versio';
+      case 'developed_by':
+        return 'Kehittänyt';
+      case 'privacy_policy':
+        return 'Tietosuojakäytäntö';
+      case 'terms_of_service':
+        return 'Käyttöehdot';
+      default:
+        return _getEnglishText(key);
+    }
+  }
+
+  // Diğer eksik diller için placeholder fonksiyonlar
+  String _getCzechText(String key) => _getEnglishText(key);
+  String _getSlovakText(String key) => _getEnglishText(key);
+  String _getHungarianText(String key) => _getEnglishText(key);
+  String _getRomanianText(String key) => _getEnglishText(key);
+  String _getBulgarianText(String key) => _getEnglishText(key);
+  String _getCroatianText(String key) => _getEnglishText(key);
+  String _getSerbianText(String key) => _getEnglishText(key);
+  String _getSlovenianText(String key) => _getEnglishText(key);
+  String _getLithuanianText(String key) => _getEnglishText(key);
+  String _getLatvianText(String key) => _getEnglishText(key);
+  String _getEstonianText(String key) => _getEnglishText(key);
+  String _getGreekText(String key) => _getEnglishText(key);
+  String _getHebrewText(String key) => _getEnglishText(key);
+  String _getThaiText(String key) => _getEnglishText(key);
+  String _getVietnameseText(String key) => _getEnglishText(key);
+  String _getIndonesianText(String key) => _getEnglishText(key);
+  String _getMalayText(String key) => _getEnglishText(key);
+  String _getFilipinoText(String key) => _getEnglishText(key);
+  String _getBelarusianText(String key) => _getEnglishText(key);
+  String _getGeorgianText(String key) => _getEnglishText(key);
+  String _getArmenianText(String key) => _getEnglishText(key);
+  String _getAzerbaijaniText(String key) => _getEnglishText(key);
+  String _getKazakhText(String key) => _getEnglishText(key);
+  String _getUzbekText(String key) => _getEnglishText(key);
+  String _getKyrgyzText(String key) => _getEnglishText(key);
+  String _getTajikText(String key) => _getEnglishText(key);
+  String _getTurkmenText(String key) => _getEnglishText(key);
+  String _getMongolianText(String key) => _getEnglishText(key);
+  String _getAmharicText(String key) => _getEnglishText(key);
+  String _getSwahiliText(String key) => _getEnglishText(key);
+  String _getHausaText(String key) => _getEnglishText(key);
+  String _getYorubaText(String key) => _getEnglishText(key);
+  String _getIgboText(String key) => _getEnglishText(key);
+  String _getZuluText(String key) => _getEnglishText(key);
+  String _getAfrikaansText(String key) => _getEnglishText(key);
+  String _getCatalanText(String key) => _getEnglishText(key);
+  String _getBasqueText(String key) => _getEnglishText(key);
+  String _getGalicianText(String key) => _getEnglishText(key);
+  String _getIrishText(String key) => _getEnglishText(key);
+  String _getScottishText(String key) => _getEnglishText(key);
+  String _getWelshText(String key) => _getEnglishText(key);
+  String _getIcelandicText(String key) => _getEnglishText(key);
+  String _getMalteseText(String key) => _getEnglishText(key);
+  String _getCorsicanText(String key) => _getEnglishText(key);
+  String _getLuxembourgishText(String key) => _getEnglishText(key);
+  String _getEsperantoText(String key) => _getEnglishText(key);
+  String _getLatinText(String key) => _getEnglishText(key);
+
   @override
   void dispose() {
     _debounceTimer?.cancel();
     _historyDebounceTimer?.cancel();
+    _speakDebounceTimer?.cancel();
     super.dispose();
   }
 } 

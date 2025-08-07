@@ -1,27 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:speech_to_text/speech_to_text.dart';
+import 'package:flutter_tts/flutter_tts.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:flag/flag.dart';
 import '../providers/translator_provider.dart';
 
 class TranslatorScreen extends StatefulWidget {
-  const TranslatorScreen({super.key});
+  const TranslatorScreen({Key? key}) : super(key: key);
 
   @override
-  State<TranslatorScreen> createState() => _TranslatorScreenState();
+  _TranslatorScreenState createState() => _TranslatorScreenState();
 }
 
 class _TranslatorScreenState extends State<TranslatorScreen> {
-  late TextEditingController _inputController;
-  late TextEditingController _outputController;
+  final TextEditingController _inputController = TextEditingController();
+  final TextEditingController _outputController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _inputController = TextEditingController();
-    _outputController = TextEditingController();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final provider = context.read<TranslatorProvider>();
+      _inputController.addListener(() {
+        provider.setInputText(_inputController.text);
+      });
+    });
   }
 
   @override
@@ -35,220 +41,129 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
   Widget build(BuildContext context) {
     return Consumer<TranslatorProvider>(
       builder: (context, provider, child) {
-        // Controller'ları güncelle
-        if (_inputController.text != provider.inputText) {
+        // Input controller'ı provider'dan güncelle
+        if (provider.inputText != _inputController.text) {
           _inputController.text = provider.inputText;
         }
-        if (_outputController.text != provider.translatedText) {
+        
+        // Çeviri sonucunu output controller'a set et
+        if (provider.translatedText != _outputController.text) {
           _outputController.text = provider.translatedText;
         }
 
-        return Container(
-          color: Colors.grey[50],
-          child: Column(
-            children: [
-              // AppBar
-              Container(
-                color: Colors.white,
-                child: AppBar(
-                  title: const Text(''),
-                  backgroundColor: Colors.white,
-                  foregroundColor: Colors.black87,
-                  elevation: 0,
-                  centerTitle: true,
-                  actions: [
-                    IconButton(
-                      onPressed: () {
-                        Navigator.pushNamed(context, '/settings');
-                      },
-                      icon: const Icon(Icons.settings),
-                      tooltip: provider.getLocalizedText('settings'),
-                    ),
-                  ],
-                ),
-              ),
-              // Ana içerik
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
+        return Scaffold(
+          backgroundColor: Colors.grey[50],
+          resizeToAvoidBottomInset: true,
+          body: SafeArea(
+            child: Column(
+              children: [
+                // Header
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.1),
+                        spreadRadius: 1,
+                        blurRadius: 5,
+                      ),
+                    ],
+                  ),
+                  child: Row(
                     children: [
-                      // Language Selection
-                      Container(
-                        padding: const EdgeInsets.all(15),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.grey.withOpacity(0.1),
-                              spreadRadius: 1,
-                              blurRadius: 5,
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          children: [
-                            // Dil seçimi satırı
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Padding(
-                                        padding: const EdgeInsets.only(left: 4, bottom: 6),
-                                        child: Text(
-                                          provider.getLocalizedText('source_language'),
-                                          style: TextStyle(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w500,
-                                            color: Colors.grey[700],
-                                          ),
-                                        ),
-                                      ),
-                                      _buildLanguageDropdown(
-                                        context,
-                                        'Kaynak Dil',
-                                        provider.fromLang,
-                                        (value) => provider.setFromLang(value!),
-                                        provider.languages,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                // Ortalanmış dil değiştirme butonu
-                                Container(
-                                  margin: const EdgeInsets.symmetric(horizontal: 12),
-                                  child: Center(
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(top: 30),
-                                      child: GestureDetector(
-                                        onTap: () => provider.swapLanguages(),
-                                        child: Container(
-                                          padding: const EdgeInsets.all(10),
-                                          decoration: BoxDecoration(
-                                            color: Colors.blue[50],
-                                            borderRadius: BorderRadius.circular(10),
-                                            border: Border.all(color: Colors.blue[200]!),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: Colors.blue.withOpacity(0.2),
-                                                blurRadius: 4,
-                                                offset: const Offset(0, 2),
-                                              ),
-                                            ],
-                                          ),
-                                          child: Icon(
-                                            Icons.swap_horiz,
-                                            color: Colors.blue[600],
-                                            size: 22,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Padding(
-                                        padding: const EdgeInsets.only(left: 4, bottom: 6),
-                                        child: Text(
-                                          provider.getLocalizedText('target_language'),
-                                          style: TextStyle(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w500,
-                                            color: Colors.grey[700],
-                                          ),
-                                        ),
-                                      ),
-                                      _buildLanguageDropdown(
-                                        context,
-                                        'Hedef Dil',
-                                        provider.toLang,
-                                        (value) => provider.setToLang(value!),
-                                        provider.languages,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
+                      // Source Language Dropdown
+                      Expanded(
+                        child: _buildLanguageDropdown(
+                          context,
+                          'Kaynak Dil',
+                          provider.fromLang,
+                          (value) => provider.setFromLang(value!),
+                          provider.languages,
                         ),
                       ),
-                      
-                      // Favori butonu kısmını kaldır
-                      
-                      // Translation Area - sabit yükseklik
-                      Container(
-                        height: MediaQuery.of(context).size.height * 0.65,
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                          children: [
-                            // Source Language Text Area
-                            Container(
-                              height: (MediaQuery.of(context).size.height * 0.65 - 40 - 90) / 2, // (total - padding - button) / 2
-                              child: _buildTextArea(
-                                label: _getLanguageName(provider.fromLang, provider.languages),
-                                controller: _inputController,
-                                onChanged: (text) => provider.setInputText(text),
-                                isInput: true,
-                                onStopRecord: () => provider.stopRecording(),
-                                backgroundColor: Colors.white,
-                                borderColor: Colors.grey[300]!,
-                              ),
-                            ),
-                            
-                            // Ses butonu - metin kutucuğunun altında ortalanmış
-                            Container(
-                              height: 90,
-                              alignment: Alignment.center,
-                              child: Consumer<TranslatorProvider>(
-                                builder: (context, provider, child) {
-                                  return Container(
-                                    width: 60,
-                                    height: 60,
-                                    decoration: BoxDecoration(
-                                      color: Colors.blue[50],
-                                      borderRadius: BorderRadius.circular(30),
-                                      border: Border.all(color: Colors.blue[200]!),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.blue.withOpacity(0.3),
-                                          blurRadius: 8,
-                                          offset: const Offset(0, 4),
-                                        ),
-                                      ],
-                                    ),
-                                    child: _buildRecordingButton(() => provider.stopRecording()),
-                                  );
-                                },
-                              ),
-                            ),
-                            
-                            // Target Language Text Area
-                            Container(
-                              height: (MediaQuery.of(context).size.height * 0.65 - 40 - 90) / 2, // (total - padding - button) / 2
-                              child: _buildTextArea(
-                                label: _getLanguageName(provider.toLang, provider.languages),
-                                controller: _outputController,
-                                onChanged: (text) {}, // Read-only
-                                isInput: false,
-                                onStopRecord: null,
-                                backgroundColor: Colors.white,
-                                borderColor: Colors.grey[300]!,
-                                showActionButtons: true, // Sağ alt köşede butonlar
-                              ),
-                            ),
-                          ],
+                      const SizedBox(width: 12),
+                      // Swap Button
+                      GestureDetector(
+                        onTap: () => provider.swapLanguages(),
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: Colors.blue[50],
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: Colors.blue[200]!),
+                          ),
+                          child: Icon(
+                            Icons.swap_horiz,
+                            color: Colors.blue[600],
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      // Target Language Dropdown
+                      Expanded(
+                        child: _buildLanguageDropdown(
+                          context,
+                          'Hedef Dil',
+                          provider.toLang,
+                          (value) => provider.setToLang(value!),
+                          provider.languages,
                         ),
                       ),
                     ],
                   ),
                 ),
-              ),
-            ],
+                
+                // Main Content
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      children: [
+                        // Source Language Text Area
+                        Container(
+                          height: 200,
+                          child: _buildTextArea(
+                            label: _getLanguageName(provider.fromLang, provider.languages),
+                            controller: _inputController,
+                            onChanged: (text) => provider.setInputText(text),
+                            isInput: true,
+                            onStopRecord: () => provider.stopRecording(),
+                            backgroundColor: Colors.white,
+                            borderColor: Colors.grey[300]!,
+                            showMicButton: true,
+                            context: context,
+                          ),
+                        ),
+                        
+                        const SizedBox(height: 16),
+                        
+                        // Target Language Text Area
+                        Container(
+                          height: 200,
+                          child: _buildTextArea(
+                            label: _getLanguageName(provider.toLang, provider.languages),
+                            controller: _outputController,
+                            onChanged: (text) {}, // Read-only
+                            isInput: false,
+                            onStopRecord: null,
+                            backgroundColor: Colors.white,
+                            borderColor: Colors.grey[300]!,
+                            showActionButtons: true,
+                            context: context,
+                          ),
+                        ),
+                        
+                        // Extra space for keyboard
+                        const SizedBox(height: 100),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -262,48 +177,127 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
     Function(String?) onChanged,
     List<Map<String, String>> languages,
   ) {
-    return Container(
-      height: 48,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.grey[300]!),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: value,
-          isExpanded: true,
-          icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[600], size: 18),
-          style: const TextStyle(fontSize: 14, color: Colors.black87),
-          items: languages
-              .map((lang) => DropdownMenuItem(
-                    value: lang['value'],
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: Row(
-                        children: [
-                          Flag.fromString(
-                            lang['flag'] ?? 'UN',
-                            height: 16,
-                            width: 24,
-                            borderRadius: 2,
+    return Consumer<TranslatorProvider>(
+      builder: (context, provider, child) {
+        return Container(
+          height: 48,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: Colors.grey[300]!),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: value,
+              isExpanded: true,
+              icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[600], size: 18),
+              style: const TextStyle(fontSize: 14, color: Colors.black87),
+              items: languages
+                  .map((lang) => DropdownMenuItem(
+                        value: lang['value'],
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: Row(
+                            children: [
+                              Flag.fromString(
+                                lang['flag'] ?? 'UN',
+                                height: 16,
+                                width: 24,
+                                borderRadius: 2,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  _getLocalizedLanguageName(lang['value']!, provider),
+                                  style: const TextStyle(fontSize: 13),
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              lang['label']!,
-                              style: const TextStyle(fontSize: 13),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ))
-              .toList(),
-          onChanged: onChanged,
-        ),
-      ),
+                        ),
+                      ))
+                  .toList(),
+              onChanged: onChanged,
+            ),
+          ),
+        );
+      },
     );
+  }
+
+  String _getLocalizedLanguageName(String langCode, TranslatorProvider provider) {
+    // Basit çözüm: Tüm diller için İngilizce isimleri döndür
+    switch (langCode) {
+      case 'tr': return 'Turkish';
+      case 'en': return 'English';
+      case 'de': return 'German';
+      case 'fr': return 'French';
+      case 'es': return 'Spanish';
+      case 'it': return 'Italian';
+      case 'pt': return 'Portuguese';
+      case 'ru': return 'Russian';
+      case 'ja': return 'Japanese';
+      case 'ko': return 'Korean';
+      case 'zh': return 'Chinese (Simplified)';
+      case 'zh-tw': return 'Chinese (Traditional)';
+      case 'ar': return 'Arabic';
+      case 'hi': return 'Hindi';
+      case 'nl': return 'Dutch';
+      case 'sv': return 'Swedish';
+      case 'no': return 'Norwegian';
+      case 'da': return 'Danish';
+      case 'fi': return 'Finnish';
+      case 'pl': return 'Polish';
+      case 'cs': return 'Czech';
+      case 'sk': return 'Slovak';
+      case 'hu': return 'Hungarian';
+      case 'ro': return 'Romanian';
+      case 'bg': return 'Bulgarian';
+      case 'hr': return 'Croatian';
+      case 'sr': return 'Serbian';
+      case 'sl': return 'Slovenian';
+      case 'lt': return 'Lithuanian';
+      case 'lv': return 'Latvian';
+      case 'et': return 'Estonian';
+      case 'el': return 'Greek';
+      case 'he': return 'Hebrew';
+      case 'th': return 'Thai';
+      case 'vi': return 'Vietnamese';
+      case 'id': return 'Indonesian';
+      case 'ms': return 'Malay';
+      case 'fil': return 'Filipino';
+      case 'bn': return 'Bengali';
+      case 'ur': return 'Urdu';
+      case 'fa': return 'Persian';
+      case 'uk': return 'Ukrainian';
+      case 'be': return 'Belarusian';
+      case 'kk': return 'Kazakh';
+      case 'uz': return 'Uzbek';
+      case 'ky': return 'Kyrgyz';
+      case 'tg': return 'Tajik';
+      case 'tk': return 'Turkmen';
+      case 'mn': return 'Mongolian';
+      case 'am': return 'Amharic';
+      case 'sw': return 'Swahili';
+      case 'ha': return 'Hausa';
+      case 'yo': return 'Yoruba';
+      case 'ig': return 'Igbo';
+      case 'zu': return 'Zulu';
+      case 'af': return 'Afrikaans';
+      case 'ca': return 'Catalan';
+      case 'eu': return 'Basque';
+      case 'gl': return 'Galician';
+      case 'ga': return 'Irish';
+      case 'gd': return 'Scottish Gaelic';
+      case 'cy': return 'Welsh';
+      case 'is': return 'Icelandic';
+      case 'mt': return 'Maltese';
+      case 'co': return 'Corsican';
+      case 'lb': return 'Luxembourgish';
+      case 'eo': return 'Esperanto';
+      case 'la': return 'Latin';
+      default: return 'Unknown';
+    }
   }
 
   Widget _buildTextArea({
@@ -316,103 +310,161 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
     required Color borderColor,
     bool showActionButtons = false,
     bool showRecordingButton = false,
+    bool showMicButton = false,
+    required BuildContext context,
   }) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey[800],
-            ),
-          ),
-          const SizedBox(height: 6),
-          Container(
-            height: 140, // Sabit yükseklik
-            decoration: BoxDecoration(
-              color: backgroundColor,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: borderColor),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.1),
-                  spreadRadius: 1,
-                  blurRadius: 5,
+          // Label with Flag
+          Padding(
+            padding: const EdgeInsets.only(left: 4, bottom: 6),
+            child: Row(
+              children: [
+                                 // Flag
+                 Flag.fromString(
+                   _getFlagCode(label),
+                   height: 20,
+                   width: 30,
+                   borderRadius: 4,
+                 ),
+                const SizedBox(width: 8),
+                // Language name
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey[800],
+                  ),
                 ),
               ],
             ),
-            child: Stack(
+          ),
+          
+          // Main text area
+          Expanded(
+            child: Column(
               children: [
-                TextField(
-                  controller: controller,
-                  onChanged: onChanged,
-                  maxLines: 6,
-                  minLines: 1,
-                  enabled: isInput,
-                  textAlignVertical: TextAlignVertical.top,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: isInput ? Colors.black87 : Colors.grey[700],
-                  ),
-                  decoration: InputDecoration(
-                    hintText: isInput ? 'Metni girin...' : 'Çeviri...',
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.all(16),
-                  ),
-                ),
-                // Sağ alt köşede butonlar
-                if (showActionButtons)
-                  Positioned(
-                    bottom: 8,
-                    right: 8,
-                    child: _buildTranslationActions(),
-                  ),
-                // Sağ alt köşede oku butonu (sadece input için)
-                if (isInput && controller.text.isNotEmpty)
-                  Positioned(
-                    bottom: 8,
-                    right: 8,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _buildFavoriteStar(),
-                        const SizedBox(width: 8),
-                        _buildReadButton(controller.text),
-                      ],
-                    ),
-                  ),
-                // Sağ üst köşede temizle (x) butonu (sadece input için)
-                if (isInput && controller.text.isNotEmpty)
-                  Positioned(
-                    top: 8,
-                    right: 12,
-                    child: GestureDetector(
-                      onTap: () {
-                        controller.clear();
-                        Provider.of<TranslatorProvider>(context, listen: false).setInputText('');
-                      },
-                      child: Container(
+                // TextField
+                Expanded(
+                  child: Stack(
+                    children: [
+                      Container(
                         decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
+                          color: backgroundColor,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: borderColor),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.grey.withOpacity(0.2),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
+                              color: Colors.grey.withOpacity(0.1),
+                              spreadRadius: 1,
+                              blurRadius: 5,
                             ),
                           ],
                         ),
-                        child: const Icon(
-                          Icons.close,
-                          size: 20,
-                          color: Colors.grey,
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: TextField(
+                            controller: controller,
+                            onChanged: onChanged,
+                            maxLines: null,
+                            minLines: isInput ? 6 : 5,
+                            enabled: isInput,
+                            textAlignVertical: TextAlignVertical.top,
+                            textInputAction: TextInputAction.newline,
+                            keyboardType: TextInputType.multiline,
+                            textCapitalization: TextCapitalization.sentences,
+                            enableInteractiveSelection: true,
+                            autocorrect: true,
+                            enableSuggestions: true,
+                            smartDashesType: SmartDashesType.enabled,
+                            smartQuotesType: SmartQuotesType.enabled,
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: isInput ? Colors.black87 : Colors.grey[700],
+                              fontFamily: 'Roboto',
+                              height: 1.2,
+                            ),
+                            decoration: InputDecoration(
+                              hintText: isInput ? 'Metin girin...' : 'Çeviri...',
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.zero,
+                              isDense: true,
+                              hintStyle: TextStyle(
+                                color: Colors.grey[400],
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
+                      // Clear button
+                      if (isInput && controller.text.isNotEmpty)
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: GestureDetector(
+                            onTap: () {
+                              controller.clear();
+                              onChanged('');
+                            },
+                            child: Container(
+                              width: 24,
+                              height: 24,
+                              decoration: BoxDecoration(
+                                color: Colors.grey[300],
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.1),
+                                    blurRadius: 2,
+                                    offset: const Offset(0, 1),
+                                  ),
+                                ],
+                              ),
+                              child: Icon(
+                                Icons.close,
+                                size: 16,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                
+                // Buttons
+                if (isInput && showMicButton)
+                  Container(
+                    height: 50,
+                    margin: const EdgeInsets.only(top: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        _buildRecordingButton(() => Provider.of<TranslatorProvider>(context, listen: false).stopRecording()),
+                        if (controller.text.isNotEmpty) ...[
+                          const SizedBox(width: 12),
+                          _buildFavoriteStar(),
+                          const SizedBox(width: 12),
+                          _buildReadButton(controller.text),
+                        ],
+                      ],
+                    ),
+                  ),
+                
+                if (showActionButtons)
+                  Container(
+                    height: 40,
+                    margin: const EdgeInsets.only(top: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        _buildTranslationActions(),
+                      ],
                     ),
                   ),
               ],
@@ -426,58 +478,78 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
   Widget _buildRecordingButton(VoidCallback? onStopRecord) {
     return Consumer<TranslatorProvider>(
       builder: (context, provider, child) {
-        return AnimatedSwitcher(
-          duration: const Duration(milliseconds: 300),
-          child: provider.isRecording
-              ? Container(
-                  decoration: BoxDecoration(
-                    color: Colors.red[100],
-                    borderRadius: BorderRadius.circular(8),
-                    boxShadow: [
-                      BoxShadow(
+        return GestureDetector(
+          onTap: provider.isRecording 
+              ? onStopRecord 
+              : () => provider.startRecording(),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              gradient: provider.isRecording 
+                  ? LinearGradient(
+                      colors: [Colors.red[400]!, Colors.red[600]!],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    )
+                  : LinearGradient(
+                      colors: [Colors.blue[400]!, Colors.blue[600]!],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: provider.isRecording 
+                      ? Colors.red.withOpacity(0.4)
+                      : Colors.blue.withOpacity(0.4),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                  spreadRadius: 1,
+                ),
+                BoxShadow(
+                  color: Colors.white.withOpacity(0.8),
+                  blurRadius: 2,
+                  offset: const Offset(-2, -2),
+                ),
+              ],
+            ),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                if (provider.isRecording)
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 1000),
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(28),
+                      border: Border.all(
                         color: Colors.red.withOpacity(0.3),
-                        blurRadius: 8,
-                        spreadRadius: 2,
+                        width: 2,
                       ),
-                    ],
-                  ),
-                  child: Center(
-                    child: IconButton(
-                      key: const ValueKey('recording'),
-                      onPressed: onStopRecord,
-                      alignment: Alignment.center,
-                      icon: Icon(
-                        Icons.stop,
-                        color: Colors.red[600],
-                        size: 28,
-                      ),
-                      tooltip: 'Kaydı Durdur',
                     ),
                   ),
-                )
-              : Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.9),
-                    borderRadius: BorderRadius.circular(8),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.3),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  child: Icon(
+                    provider.isRecording ? Icons.stop_rounded : Icons.mic_rounded,
+                    key: ValueKey(provider.isRecording),
+                    color: Colors.white,
+                    size: 24,
+                    shadows: [
+                      Shadow(
+                        color: Colors.black.withOpacity(0.3),
+                        offset: const Offset(0, 1),
+                        blurRadius: 2,
                       ),
                     ],
-                  ),
-                  child: IconButton(
-                    key: const ValueKey('not_recording'),
-                    onPressed: () => provider.startRecording(),
-                    icon: Icon(
-                      Icons.mic,
-                      color: Colors.blue[600],
-                      size: 28,
-                    ),
-                    tooltip: 'Konuş',
                   ),
                 ),
+              ],
+            ),
+          ),
         );
       },
     );
@@ -602,8 +674,8 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
                 SnackBar(
                   content: Text(
                     provider.isCurrentTranslationFavorited
-                        ? 'Bu çeviriyi favorilerinize eklediniz'
-                        : 'Bu çeviriyi favorilerinizden çıkardınız',
+                        ? 'Favorilere eklendi'
+                        : 'Favorilerden çıkarıldı',
                     style: GoogleFonts.poppins(),
                   ),
                   backgroundColor: provider.isCurrentTranslationFavorited 
@@ -629,6 +701,169 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
     );
   }
 
+  String _getLanguageName(String langCode, List<Map<String, String>> languages) {
+    final language = languages.firstWhere(
+      (lang) => lang['value'] == langCode,
+      orElse: () => {'label': 'Bilinmeyen Dil'},
+    );
+    return language['label'] ?? 'Bilinmeyen Dil';
+  }
+
+  String _getFlagCode(String languageName) {
+    // Dil adına göre bayrak kodu döndür
+    switch (languageName.toLowerCase()) {
+      case 'ingilizce':
+      case 'english':
+        return 'GB';
+      case 'türkçe':
+      case 'turkish':
+        return 'TR';
+      case 'italyanca':
+      case 'italian':
+        return 'IT';
+      case 'almanca':
+      case 'german':
+        return 'DE';
+      case 'fransızca':
+      case 'french':
+        return 'FR';
+      case 'ispanyolca':
+      case 'spanish':
+        return 'ES';
+      case 'portekizce':
+      case 'portuguese':
+        return 'PT';
+      case 'rusça':
+      case 'russian':
+        return 'RU';
+      case 'japonca':
+      case 'japanese':
+        return 'JP';
+      case 'korece':
+      case 'korean':
+        return 'KR';
+      case 'çince (basitleştirilmiş)':
+      case 'chinese (simplified)':
+        return 'CN';
+      case 'çince (geleneksel)':
+      case 'chinese (traditional)':
+        return 'TW';
+      case 'arapça':
+      case 'arabic':
+        return 'SA';
+      case 'hintçe':
+      case 'hindi':
+        return 'IN';
+      case 'bengalce':
+      case 'bengali':
+        return 'BD';
+      case 'urduca':
+      case 'urdu':
+        return 'PK';
+      case 'farsça':
+      case 'persian':
+        return 'IR';
+      case 'hollandaca':
+      case 'dutch':
+        return 'NL';
+      case 'isveççe':
+      case 'swedish':
+        return 'SE';
+      case 'norveççe':
+      case 'norwegian':
+        return 'NO';
+      case 'danca':
+      case 'danish':
+        return 'DK';
+      case 'fince':
+      case 'finnish':
+        return 'FI';
+      case 'lehçe':
+      case 'polish':
+        return 'PL';
+      case 'çekçe':
+      case 'czech':
+        return 'CZ';
+      case 'slovakça':
+      case 'slovak':
+        return 'SK';
+      case 'macarca':
+      case 'hungarian':
+        return 'HU';
+      case 'rumence':
+      case 'romanian':
+        return 'RO';
+      case 'bulgarca':
+      case 'bulgarian':
+        return 'BG';
+      case 'hırvatça':
+      case 'croatian':
+        return 'HR';
+      case 'sırpça':
+      case 'serbian':
+        return 'RS';
+      case 'slovence':
+      case 'slovenian':
+        return 'SI';
+      case 'litvanyaca':
+      case 'lithuanian':
+        return 'LT';
+      case 'letonca':
+      case 'latvian':
+        return 'LV';
+      case 'estonca':
+      case 'estonian':
+        return 'EE';
+      case 'yunanca':
+      case 'greek':
+        return 'GR';
+      case 'ibranice':
+      case 'hebrew':
+        return 'IL';
+      case 'tayca':
+      case 'thai':
+        return 'TH';
+      case 'vietnamca':
+      case 'vietnamese':
+        return 'VN';
+      case 'endonezce':
+      case 'indonesian':
+        return 'ID';
+      case 'malayca':
+      case 'malay':
+        return 'MY';
+      case 'filipince':
+      case 'filipino':
+        return 'PH';
+      case 'ukraynaca':
+      case 'ukrainian':
+        return 'UA';
+      case 'belarusça':
+      case 'belarusian':
+        return 'BY';
+      case 'kazakça':
+      case 'kazakh':
+        return 'KZ';
+      case 'özbekçe':
+      case 'uzbek':
+        return 'UZ';
+      case 'kırgızca':
+      case 'kyrgyz':
+        return 'KG';
+      case 'tacikçe':
+      case 'tajik':
+        return 'TJ';
+      case 'türkmence':
+      case 'turkmen':
+        return 'TM';
+      case 'moğolca':
+      case 'mongolian':
+        return 'MN';
+      default:
+        return 'UN'; // Unknown flag
+    }
+  }
+
   void _copyToClipboard(String text) {
     Clipboard.setData(ClipboardData(text: text));
   }
@@ -636,15 +871,7 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
   void _shareText(String text) {
     Share.share(
       text,
-      subject: 'Voicely Çeviri',
+      subject: 'Voicely Translate',
     );
-  }
-
-  String _getLanguageName(String langCode, List<Map<String, String>> languages) {
-    final language = languages.firstWhere(
-      (lang) => lang['value'] == langCode,
-      orElse: () => {'label': 'Bilinmeyen Dil'},
-    );
-    return language['label'] ?? 'Bilinmeyen Dil';
   }
 } 
