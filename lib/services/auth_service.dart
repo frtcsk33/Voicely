@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'supabase_client.dart';
+import 'user_service.dart';
 
 /// Mock user class for demo mode
 class MockUser implements User {
@@ -114,6 +115,7 @@ class AuthService extends ChangeNotifier {
   User? _currentUser;
   bool _isLoading = false;
   String? _errorMessage;
+  UserService? _userService;
 
   // Getters
   User? get currentUser => _currentUser;
@@ -135,8 +137,14 @@ class AuthService extends ChangeNotifier {
     return _currentUser!.userMetadata?['avatar_url'];
   }
 
-  AuthService() {
+  AuthService({UserService? userService}) {
+    _userService = userService;
     _initialize();
+  }
+  
+  /// Set the user service for profile management
+  void setUserService(UserService userService) {
+    _userService = userService;
   }
 
   /// Initialize the auth service and listen to auth state changes
@@ -158,14 +166,17 @@ class AuthService extends ChangeNotifier {
           case AuthChangeEvent.signedIn:
             _currentUser = session?.user;
             _clearError();
-            // Create user profile in public.users table
+            // Create user profile in public.users table and load profile
             if (_currentUser != null) {
               _createUserProfile(_currentUser!);
+              _loadUserProfile(_currentUser!.id);
             }
             break;
           case AuthChangeEvent.signedOut:
             _currentUser = null;
             _clearError();
+            // Clear user profile from UserService
+            _userService?.clearUserProfile();
             break;
           case AuthChangeEvent.userUpdated:
             _currentUser = session?.user;
@@ -222,6 +233,8 @@ class AuthService extends ChangeNotifier {
 
       if (response.user != null) {
         _currentUser = response.user;
+        // Load user profile after successful signup
+        await _loadUserProfile(response.user!.id);
         notifyListeners();
         return true;
       } else {
@@ -284,6 +297,8 @@ class AuthService extends ChangeNotifier {
 
       if (response.user != null) {
         _currentUser = response.user;
+        // Load user profile after successful sign in
+        await _loadUserProfile(response.user!.id);
         notifyListeners();
         return true;
       } else {
@@ -384,6 +399,17 @@ class AuthService extends ChangeNotifier {
   void clearError() {
     _clearError();
     notifyListeners();
+  }
+
+  /// Load user profile after authentication
+  Future<void> _loadUserProfile(String userId) async {
+    try {
+      await _userService?.loadUserProfile(userId);
+    } catch (e) {
+      if (kDebugMode) {
+        print('Failed to load user profile: $e');
+      }
+    }
   }
 
   /// Create user profile in public.users table

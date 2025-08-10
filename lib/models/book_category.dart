@@ -11,10 +11,10 @@ class BookCategory {
   BookCategory({
     required this.id,
     required this.name,
-    required this.description,
-    required this.iconName,
-    required this.colorHex,
-    required this.wordCount,
+    this.description = '',
+    this.iconName = 'book',
+    this.colorHex = '#3B82F6',
+    this.wordCount = 0,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -22,10 +22,10 @@ class BookCategory {
   factory BookCategory.fromJson(Map<String, dynamic> json) {
     return BookCategory(
       id: json['id'] as String,
-      name: json['name'] as String,
-      description: json['description'] as String,
-      iconName: json['icon_name'] as String,
-      colorHex: json['color_hex'] as String,
+      name: json['name'] as String, // English name
+      description: json['description'] as String? ?? '',
+      iconName: json['icon'] as String? ?? 'book',
+      colorHex: json['color'] as String? ?? '#3B82F6',
       wordCount: json['word_count'] as int? ?? 0,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
@@ -37,8 +37,8 @@ class BookCategory {
       'id': id,
       'name': name,
       'description': description,
-      'icon_name': iconName,
-      'color_hex': colorHex,
+      'icon': iconName,
+      'color': colorHex,
       'word_count': wordCount,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),

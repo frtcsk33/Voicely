@@ -1936,6 +1936,15 @@ class TranslatorProvider with ChangeNotifier {
     _debounceTranslate();
   }
 
+  void clearInput() {
+    _inputText = '';
+    _translatedText = '';
+    _textController.clear();
+    _isTranslating = false;
+    _updateFavoriteStatus();
+    notifyListeners();
+  }
+
   void _debounceTranslate() {
     _debounceTimer?.cancel();
     _debounceTimer = Timer(const Duration(milliseconds: 200), () {
@@ -3235,4 +3244,4 @@ class TranslatorProvider with ChangeNotifier {
     _textController.dispose();
     super.dispose();
   }
-} 
+}

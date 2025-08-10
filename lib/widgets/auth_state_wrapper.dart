@@ -12,20 +12,25 @@ import '../main.dart';
 /// - HomePage if user is authenticated
 /// - Loading screen during authentication checks
 class AuthStateWrapper extends StatelessWidget {
-  const AuthStateWrapper({super.key});
+  final Widget child;
+  const AuthStateWrapper({super.key, required this.child});
 
   @override
   Widget build(BuildContext context) {
     return Consumer<AuthService>(
-      builder: (context, authService, child) {
+      builder: (context, authService, _) {
         // Show loading screen during authentication operations
         if (authService.isLoading) {
           return const AuthLoadingScreen();
         }
 
-        // Always show home page - users can access login from settings if needed
-        // This provides better UX by not forcing authentication
-        return const MainScreen();
+        // If user is not authenticated, show login screen
+        if (!authService.isAuthenticated) {
+          return const LoginScreen();
+        }
+
+        // User is authenticated, show the main app
+        return child;
       },
     );
   }

@@ -128,7 +128,6 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
                           child: _buildTextArea(
                             label: _getLanguageName(provider.fromLang, provider.languages),
                             controller: _inputController,
-                            onChanged: (text) => provider.setInputText(text),
                             isInput: true,
                             onStopRecord: () => provider.stopRecording(),
                             backgroundColor: Colors.white,
@@ -146,7 +145,6 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
                           child: _buildTextArea(
                             label: _getLanguageName(provider.toLang, provider.languages),
                             controller: _outputController,
-                            onChanged: (text) {}, // Read-only
                             isInput: false,
                             onStopRecord: null,
                             backgroundColor: Colors.white,
@@ -303,7 +301,6 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
   Widget _buildTextArea({
     required String label,
     required TextEditingController controller,
-    required Function(String) onChanged,
     required bool isInput,
     required VoidCallback? onStopRecord,
     required Color backgroundColor,
@@ -369,7 +366,6 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
                           padding: const EdgeInsets.all(16),
                           child: TextField(
                             controller: controller,
-                            onChanged: onChanged,
                             maxLines: null,
                             minLines: isInput ? 6 : 5,
                             enabled: isInput,
@@ -404,33 +400,14 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
                       // Clear button
                       if (isInput && controller.text.isNotEmpty)
                         Positioned(
-                          top: 8,
-                          right: 8,
-                          child: GestureDetector(
-                            onTap: () {
-                              controller.clear();
-                              onChanged('');
-                            },
-                            child: Container(
-                              width: 24,
-                              height: 24,
-                              decoration: BoxDecoration(
-                                color: Colors.grey[300],
-                                borderRadius: BorderRadius.circular(12),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.1),
-                                    blurRadius: 2,
-                                    offset: const Offset(0, 1),
-                                  ),
-                                ],
-                              ),
-                              child: Icon(
-                                Icons.close,
-                                size: 16,
-                                color: Colors.grey[600],
-                              ),
-                            ),
+                          top: 4,
+                          right: 4,
+                          child: IconButton(
+                            icon: const Icon(Icons.close),
+                            iconSize: 20,
+                            color: Colors.grey[600],
+                            tooltip: 'Clear text',
+                            onPressed: () => controller.clear(),
                           ),
                         ),
                     ],

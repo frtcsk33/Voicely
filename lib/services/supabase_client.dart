@@ -6,11 +6,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// - Get your URL from: https://app.supabase.com/project/[your-project]/settings/api
 /// - Get your anon key from: https://app.supabase.com/project/[your-project]/settings/api
 class SupabaseConfig {
-  // TODO: Replace with your actual Supabase project URL
-  static const String supabaseUrl = 'https://your-project-ref.supabase.co';
+  // Your actual Supabase project URL
+  static const String supabaseUrl = 'https://ktbrqlaptijcbtkfbxes.supabase.co';
   
-  // TODO: Replace with your actual Supabase anon/public key
-  static const String supabaseAnonKey = 'your-anon-key-here';
+  // Your actual Supabase anon/public key
+  static const String supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0YnJxbGFwdGlqY2J0a2ZieGVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQxMTYwOTcsImV4cCI6MjA2OTY5MjA5N30.Ss9akSXWN8Hcx9cz39pcMjLABoJPEXb5JqO-RMWYUDc';
   
   /// Initialize Supabase client
   /// Call this in main() before runApp()

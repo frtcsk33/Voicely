@@ -16,12 +16,12 @@ class Word {
   Word({
     required this.id,
     required this.word,
-    required this.meaning,
-    required this.pronunciation,
+    this.meaning = '',
+    this.pronunciation = '',
     this.audioUrl,
     required this.categoryId,
-    required this.languageFrom,
-    required this.languageTo,
+    this.languageFrom = 'en',
+    this.languageTo = 'tr',
     this.isFavorite = false,
     this.exampleSentence,
     this.exampleTranslation,
@@ -33,15 +33,15 @@ class Word {
     return Word(
       id: json['id'] as String,
       word: json['word'] as String,
-      meaning: json['meaning'] as String,
-      pronunciation: json['pronunciation'] as String,
+      meaning: json['translation'] as String? ?? '',
+      pronunciation: json['phonetic'] as String? ?? '',
       audioUrl: json['audio_url'] as String?,
       categoryId: json['category_id'] as String,
-      languageFrom: json['language_from'] as String,
-      languageTo: json['language_to'] as String,
-      isFavorite: json['is_favorite'] as bool? ?? false,
+      languageFrom: 'en', // Default since your DB doesn't have this column
+      languageTo: 'tr', // Default since your DB doesn't have this column  
+      isFavorite: false, // Default since your DB doesn't have this column
       exampleSentence: json['example_sentence'] as String?,
-      exampleTranslation: json['example_translation'] as String?,
+      exampleTranslation: null, // Your DB doesn't have this column
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
     );
@@ -51,8 +51,8 @@ class Word {
     return {
       'id': id,
       'word': word,
-      'meaning': meaning,
-      'pronunciation': pronunciation,
+      'translation': meaning,
+      'phonetic': pronunciation,
       'audio_url': audioUrl,
       'category_id': categoryId,
       'language_from': languageFrom,

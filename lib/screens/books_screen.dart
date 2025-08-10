@@ -140,52 +140,52 @@ class _BooksScreenState extends State<BooksScreen>
               );
             }
 
-            return SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Header Section
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withOpacity(0.1),
-                          spreadRadius: 1,
-                          blurRadius: 10,
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    Colors.blue[400]!,
-                                    Colors.blue[600]!,
-                                  ],
-                                ),
-                                borderRadius: BorderRadius.circular(12),
+            return Column(
+              children: [
+                // Header Section - Fixed height
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.1),
+                        spreadRadius: 1,
+                        blurRadius: 10,
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  Colors.blue[400]!,
+                                  Colors.blue[600]!,
+                                ],
                               ),
-                              child: const Icon(
-                                Icons.menu_book,
-                                color: Colors.white,
-                                size: 24,
-                              ),
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
+                            child: const Icon(
+                              Icons.menu_book,
+                              color: Colors.white,
+                              size: 24,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
                                     'Kelime Koleksiyonları',
                                     style: GoogleFonts.poppins(
                                       fontSize: 20,
@@ -193,43 +193,49 @@ class _BooksScreenState extends State<BooksScreen>
                                       color: Colors.grey[800],
                                     ),
                                   ),
-                                  const SizedBox(height: 4),
-                                  Text(
+                                ),
+                                const SizedBox(height: 4),
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
                                     'Kategorilere göre düzenlenmiş kelimeler',
                                     style: GoogleFonts.poppins(
                                       fontSize: 14,
                                       color: Colors.grey[600],
                                     ),
                                   ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        Row(
-                          children: [
-                            _buildStatCard(
-                              'Kategoriler',
-                              '${booksService.categories.length}',
-                              Icons.category,
-                              Colors.blue,
-                            ),
-                            const SizedBox(width: 12),
-                            _buildStatCard(
-                              'Toplam Kelime',
-                              '${booksService.categories.fold(0, (sum, cat) => sum + cat.wordCount)}',
-                              Icons.library_books,
-                              Colors.green,
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          _buildStatCard(
+                            'Kategoriler',
+                            '${booksService.categories.length}',
+                            Icons.category,
+                            Colors.blue,
+                          ),
+                          const SizedBox(width: 12),
+                          _buildStatCard(
+                            'Toplam Kelime',
+                            '${booksService.categories.fold(0, (sum, cat) => sum + cat.wordCount)}',
+                            Icons.library_books,
+                            Colors.green,
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
+                ),
 
-                  // Categories Section
-                  Padding(
+                // Categories Section - Expandable
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
                     padding: const EdgeInsets.all(20),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -246,11 +252,11 @@ class _BooksScreenState extends State<BooksScreen>
                         GridView.builder(
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
-                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: 2,
                             crossAxisSpacing: 12,
                             mainAxisSpacing: 12,
-                            childAspectRatio: 1.1,
+                            childAspectRatio: MediaQuery.of(context).size.width < 400 ? 0.9 : 1.1,
                           ),
                           itemCount: booksService.categories.length,
                           itemBuilder: (context, index) {
@@ -258,11 +264,13 @@ class _BooksScreenState extends State<BooksScreen>
                             return _buildCategoryCard(category, index);
                           },
                         ),
+                        // Add bottom padding to ensure last items are visible
+                        const SizedBox(height: 20),
                       ],
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             );
           },
         ),
@@ -446,6 +454,9 @@ class _BooksScreenState extends State<BooksScreen>
       case 'flight': return Icons.flight;
       case 'computer': return Icons.computer;
       case 'category': return Icons.category;
+      case 'restaurant': return Icons.restaurant;
+      case 'local_hospital': return Icons.local_hospital;
+      case 'business_center': return Icons.business_center;
       default: return Icons.book;
     }
   }
