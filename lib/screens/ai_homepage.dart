@@ -12,6 +12,7 @@ import '../widgets/better_translation_button.dart';
 import '../widgets/upgrade_to_pro_dialog.dart';
 import 'pro_subscription_screen.dart';
 import '../services/auth_service.dart';
+import '../services/user_service.dart';
 import 'auth/login_screen.dart';
 
 class AIHomepage extends StatefulWidget {
@@ -1033,8 +1034,8 @@ class _AIHomepageState extends State<AIHomepage>
 
             // Menu Items
             Expanded(
-              child: Consumer<AuthService>(
-                builder: (context, authService, child) {
+              child: Consumer2<AuthService, UserService>(
+                builder: (context, authService, userService, child) {
                   return ListView(
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     children: [
@@ -1049,7 +1050,7 @@ class _AIHomepageState extends State<AIHomepage>
                       if (authService.isAuthenticated)
                         _buildMenuItem(
                           icon: Icons.account_circle_rounded,
-                          title: authService.currentUser?.email ?? 'Account',
+                          title: userService.displayName ?? authService.currentUser?.email ?? 'Account',
                           subtitle: translatorProvider.getLocalizedText('manage_account'),
                           onTap: () => _showAccountOptions(context, translatorProvider),
                         ),

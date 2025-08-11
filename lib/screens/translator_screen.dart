@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flag/flag.dart';
 import '../providers/translator_provider.dart';
+import '../widgets/searchable_language_dropdown.dart';
 
 class TranslatorScreen extends StatefulWidget {
   const TranslatorScreen({Key? key}) : super(key: key);
@@ -74,12 +75,11 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
                     children: [
                       // Source Language Dropdown
                       Expanded(
-                        child: _buildLanguageDropdown(
-                          context,
-                          'Kaynak Dil',
-                          provider.fromLang,
-                          (value) => provider.setFromLang(value!),
-                          provider.languages,
+                        child: SearchableLanguageDropdown(
+                          value: provider.fromLang,
+                          hint: 'Kaynak Dil',
+                          languages: provider.languages,
+                          onChanged: (value, name) => provider.setFromLang(value),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -104,12 +104,11 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
                       const SizedBox(width: 12),
                       // Target Language Dropdown
                       Expanded(
-                        child: _buildLanguageDropdown(
-                          context,
-                          'Hedef Dil',
-                          provider.toLang,
-                          (value) => provider.setToLang(value!),
-                          provider.languages,
+                        child: SearchableLanguageDropdown(
+                          value: provider.toLang,
+                          hint: 'Hedef Dil',
+                          languages: provider.languages,
+                          onChanged: (value, name) => provider.setToLang(value),
                         ),
                       ),
                     ],
@@ -168,60 +167,6 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
     );
   }
 
-  Widget _buildLanguageDropdown(
-    BuildContext context,
-    String label,
-    String value,
-    Function(String?) onChanged,
-    List<Map<String, String>> languages,
-  ) {
-    return Consumer<TranslatorProvider>(
-      builder: (context, provider, child) {
-        return Container(
-          height: 48,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: Colors.grey[300]!),
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: value,
-              isExpanded: true,
-              icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[600], size: 18),
-              style: const TextStyle(fontSize: 14, color: Colors.black87),
-              items: languages
-                  .map((lang) => DropdownMenuItem(
-                        value: lang['value'],
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          child: Row(
-                            children: [
-                              Flag.fromString(
-                                lang['flag'] ?? 'UN',
-                                height: 16,
-                                width: 24,
-                                borderRadius: 2,
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  _getLocalizedLanguageName(lang['value']!, provider),
-                                  style: const TextStyle(fontSize: 13),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ))
-                  .toList(),
-              onChanged: onChanged,
-            ),
-          ),
-        );
-      },
-    );
-  }
 
   String _getLocalizedLanguageName(String langCode, TranslatorProvider provider) {
     // Basit çözüm: Tüm diller için İngilizce isimleri döndür

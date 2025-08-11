@@ -8,11 +8,15 @@ import 'screens/history_screen.dart';
 import 'screens/favorites_screen.dart';
 import 'screens/books_screen.dart';
 import 'screens/settings_screen.dart';
+import 'screens/conversation_screen.dart';
+import 'screens/real_time_conversation_screen.dart';
 import 'providers/translator_provider.dart';
 import 'services/supabase_client.dart';
 import 'services/auth_service.dart';
 import 'services/books_service.dart';
 import 'services/user_service.dart';
+import 'providers/conversation_provider.dart';
+import 'providers/real_time_conversation_provider.dart';
 import 'widgets/auth_state_wrapper.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/services.dart';
@@ -55,6 +59,14 @@ void main() async {
           },
         ),
         ChangeNotifierProvider(create: (context) => BooksService()),
+        ChangeNotifierProxyProvider<UserService, ConversationProvider>(
+          create: (context) => ConversationProvider(),
+          update: (context, userService, conversationProvider) {
+            conversationProvider?.setUserService(userService);
+            return conversationProvider ?? ConversationProvider();
+          },
+        ),
+        ChangeNotifierProvider(create: (context) => RealTimeConversationProvider()),
       ],
       child: const VoicelyApp(),
     ),
@@ -192,6 +204,7 @@ class _MainScreenState extends State<MainScreen> {
 
   final List<Widget> _screens = [
     const AIHomepage(),
+    const RealTimeConversationScreen(),
     const CameraScreen(),
     const BooksScreen(),
     const HistoryScreen(),
@@ -226,6 +239,10 @@ class _MainScreenState extends State<MainScreen> {
           BottomNavigationBarItem(
             icon: const Icon(Icons.translate),
             label: translatorProvider.getLocalizedText('translate'),
+          ),
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.record_voice_over),
+            label: 'İki Taraflı',
           ),
           BottomNavigationBarItem(
             icon: const Icon(Icons.camera_alt),
