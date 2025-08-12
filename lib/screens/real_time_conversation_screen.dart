@@ -6,7 +6,7 @@ import '../providers/real_time_conversation_provider.dart';
 import '../providers/translator_provider.dart';
 import '../widgets/conversation_card.dart';
 import '../widgets/mic_button.dart';
-import '../widgets/searchable_language_dropdown.dart';
+import '../widgets/language_selector.dart';
 
 class RealTimeConversationScreen extends StatefulWidget {
   const RealTimeConversationScreen({super.key});
@@ -62,66 +62,8 @@ class _RealTimeConversationScreenState extends State<RealTimeConversationScreen>
           builder: (context, provider, translatorProvider, child) {
             return Column(
               children: [
-                // Dil Değiştirici (Translator style)
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.1),
-                        spreadRadius: 1,
-                        blurRadius: 5,
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      // Source Language Dropdown
-                      Expanded(
-                        child: SearchableLanguageDropdown(
-                          value: provider.language1,
-                          hint: 'Kaynak Dil',
-                          languages: translatorProvider.languages,
-                          onChanged: (langCode, langName) {
-                            provider.setLanguage1(langCode, langName);
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      // Swap Button
-                      GestureDetector(
-                        onTap: () => provider.swapLanguages(),
-                        child: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: Colors.blue[50],
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: Colors.blue[200]!),
-                          ),
-                          child: Icon(
-                            Icons.swap_horiz,
-                            color: Colors.blue[600],
-                            size: 20,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      // Target Language Dropdown
-                      Expanded(
-                        child: SearchableLanguageDropdown(
-                          value: provider.language2,
-                          hint: 'Hedef Dil',
-                          languages: translatorProvider.languages,
-                          onChanged: (langCode, langName) {
-                            provider.setLanguage2(langCode, langName);
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                // Modern Language Selector
+                RealTimeLanguageSelector(provider: provider),
                 
                 // Ana Konuşma Alanı
                 Expanded(
@@ -296,6 +238,377 @@ class _RealTimeConversationScreenState extends State<RealTimeConversationScreen>
             onPressed: () => Navigator.pop(context),
             child: const Text('Kapat'),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class RealTimeLanguageSelector extends StatelessWidget {
+  final RealTimeConversationProvider provider;
+  
+  const RealTimeLanguageSelector({
+    super.key,
+    required this.provider,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    
+    return Consumer<TranslatorProvider>(
+      builder: (context, translatorProvider, child) {
+        return Container(
+          width: screenWidth * 0.95,
+          padding: const EdgeInsets.all(16),
+          margin: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              // From Language
+              Expanded(
+                child: _buildLanguageButton(
+                  context,
+                  provider,
+                  translatorProvider,
+                  provider.language1,
+                  'From',
+                  true,
+                  translatorProvider.languages,
+                ),
+              ),
+              
+              // Swap Button
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: GestureDetector(
+                  onTap: () => provider.swapLanguages(),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.swap_horiz_rounded,
+                      color: Colors.grey.shade600,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ),
+              
+              // To Language
+              Expanded(
+                child: _buildLanguageButton(
+                  context,
+                  provider,
+                  translatorProvider,
+                  provider.language2,
+                  'To',
+                  false,
+                  translatorProvider.languages,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildLanguageButton(
+    BuildContext context,
+    RealTimeConversationProvider provider,
+    TranslatorProvider translatorProvider,
+    String langCode,
+    String label,
+    bool isFrom,
+    List<Map<String, String>> languages,
+  ) {
+    Map<String, String> language;
+    
+    try {
+      language = languages.firstWhere(
+        (lang) => lang['value'] == langCode,
+      );
+    } catch (e) {
+      language = {
+        'label': 'Unknown', 
+        'value': langCode, 
+        'flag': 'GB'
+      };
+    }
+
+    return GestureDetector(
+      onTap: () => _showLanguagePicker(context, provider, translatorProvider, isFrom),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: GoogleFonts.poppins(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: Colors.grey.shade600,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Flag.fromString(
+                  language['flag']!,
+                  height: 20,
+                  width: 28,
+                  borderRadius: 4,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    language['label']!,
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey.shade800,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  color: Colors.grey.shade500,
+                  size: 20,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showLanguagePicker(BuildContext context, RealTimeConversationProvider provider, TranslatorProvider translatorProvider, bool isFrom) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      useSafeArea: false,
+      enableDrag: true,
+      builder: (context) => _RealTimeLanguagePickerModal(
+        provider: provider,
+        translatorProvider: translatorProvider,
+        isFrom: isFrom,
+      ),
+    );
+  }
+}
+
+class _RealTimeLanguagePickerModal extends StatefulWidget {
+  final RealTimeConversationProvider provider;
+  final TranslatorProvider translatorProvider;
+  final bool isFrom;
+
+  const _RealTimeLanguagePickerModal({
+    required this.provider,
+    required this.translatorProvider,
+    required this.isFrom,
+  });
+
+  @override
+  State<_RealTimeLanguagePickerModal> createState() => _RealTimeLanguagePickerModalState();
+}
+
+class _RealTimeLanguagePickerModalState extends State<_RealTimeLanguagePickerModal> {
+  String _searchQuery = '';
+
+  @override
+  Widget build(BuildContext context) {
+    final languages = widget.translatorProvider.languages;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final topPadding = MediaQuery.of(context).padding.top;
+    
+    // Filter languages based on search query
+    final filteredLanguages = languages.where((language) {
+      return language['label']!.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+             language['value']!.toLowerCase().contains(_searchQuery.toLowerCase());
+    }).toList();
+    
+    return Container(
+      height: screenHeight - topPadding,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
+        children: [
+          // Handle
+          Container(
+            margin: const EdgeInsets.only(top: 12),
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade300,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          
+          // Header
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              children: [
+                Text(
+                  widget.isFrom ? 'Select source language' : 'Select target language',
+                  style: GoogleFonts.poppins(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey.shade800,
+                  ),
+                ),
+                const Spacer(),
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.close_rounded,
+                      color: Colors.grey.shade600,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          // Search Bar
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: TextField(
+                autofocus: false,
+                onChanged: (value) {
+                  setState(() {
+                    _searchQuery = value;
+                  });
+                },
+                decoration: InputDecoration(
+                  hintText: 'Search languages...',
+                  hintStyle: GoogleFonts.poppins(
+                    color: Colors.grey.shade600,
+                    fontSize: 14,
+                  ),
+                  prefixIcon: Icon(
+                    Icons.search,
+                    color: Colors.grey.shade600,
+                    size: 20,
+                  ),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          
+          const SizedBox(height: 16),
+          
+          // Language List
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              itemCount: filteredLanguages.length,
+              itemBuilder: (context, index) {
+                final language = filteredLanguages[index];
+                final isSelected = (widget.isFrom ? widget.provider.language1 : widget.provider.language2) == language['value'];
+                
+                return GestureDetector(
+                  onTap: () {
+                    if (widget.isFrom) {
+                      widget.provider.setLanguage1(
+                        language['value']!,
+                        language['label']!,
+                      );
+                    } else {
+                      widget.provider.setLanguage2(
+                        language['value']!,
+                        language['label']!,
+                      );
+                    }
+                    Navigator.pop(context);
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: isSelected ? Colors.blue.shade50 : Colors.transparent,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isSelected ? Colors.blue.shade200 : Colors.grey.shade200,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Flag.fromString(
+                          language['flag']!,
+                          height: 24,
+                          width: 32,
+                          borderRadius: 4,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            language['label']!,
+                            style: GoogleFonts.poppins(
+                              fontSize: 16,
+                              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                              color: isSelected ? Colors.blue.shade700 : Colors.grey.shade800,
+                            ),
+                          ),
+                        ),
+                        if (isSelected)
+                          Icon(
+                            Icons.check_rounded,
+                            color: Colors.blue.shade600,
+                            size: 20,
+                          ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          
+          // Bottom padding for safe area
+          SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
         ],
       ),
     );

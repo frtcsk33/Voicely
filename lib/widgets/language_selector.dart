@@ -188,121 +188,198 @@ class LanguageSelector extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.7,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: Column(
-          children: [
-            // Handle
-            Container(
-              margin: const EdgeInsets.only(top: 12),
-              width: 40,
-              height: 4,
+      useSafeArea: false,
+      enableDrag: true,
+      builder: (context) => _LanguagePickerModal(
+        provider: provider,
+        isFrom: isFrom,
+      ),
+    );
+  }
+}
+
+class _LanguagePickerModal extends StatefulWidget {
+  final TranslatorProvider provider;
+  final bool isFrom;
+
+  const _LanguagePickerModal({
+    required this.provider,
+    required this.isFrom,
+  });
+
+  @override
+  State<_LanguagePickerModal> createState() => _LanguagePickerModalState();
+}
+
+class _LanguagePickerModalState extends State<_LanguagePickerModal> {
+  String _searchQuery = '';
+
+  @override
+  Widget build(BuildContext context) {
+    final languages = widget.isFrom ? widget.provider.sourceLanguages : widget.provider.targetLanguages;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final topPadding = MediaQuery.of(context).padding.top;
+    
+    // Filter languages based on search query
+    final filteredLanguages = languages.where((language) {
+      return language['label']!.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+             language['value']!.toLowerCase().contains(_searchQuery.toLowerCase());
+    }).toList();
+    
+    return Container(
+      height: screenHeight - topPadding,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
+        children: [
+          // Handle
+          Container(
+            margin: const EdgeInsets.only(top: 12),
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade300,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          
+          // Header
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              children: [
+                Text(
+                  widget.isFrom ? 'Select source language' : 'Select target language',
+                  style: GoogleFonts.poppins(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey.shade800,
+                  ),
+                ),
+                const Spacer(),
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.close_rounded,
+                      color: Colors.grey.shade600,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          // Search Bar
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Container(
               decoration: BoxDecoration(
-                color: Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(2),
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(12),
               ),
-            ),
-            
-            // Header
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Row(
-                children: [
-                  Text(
-                    isFrom ? 'Select source language' : 'Select target language',
-                    style: GoogleFonts.poppins(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey.shade800,
-                    ),
-                  ),
-                  const Spacer(),
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade100,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(
-                        Icons.close_rounded,
-                        color: Colors.grey.shade600,
-                        size: 20,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            
-            // Language List
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                itemCount: isFrom ? provider.sourceLanguages.length : provider.targetLanguages.length,
-                itemBuilder: (context, index) {
-                  final languages = isFrom ? provider.sourceLanguages : provider.targetLanguages;
-                  final language = languages[index];
-                  final isSelected = (isFrom ? provider.fromLang : provider.toLang) == language['value'];
-                  
-                  return GestureDetector(
-                    onTap: () {
-                      if (isFrom) {
-                        provider.setFromLang(language['value']!);
-                      } else {
-                        provider.setToLang(language['value']!);
-                      }
-                      Navigator.pop(context);
-                    },
-                    child: Container(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: isSelected ? Colors.blue.shade50 : Colors.transparent,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isSelected ? Colors.blue.shade200 : Colors.grey.shade200,
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Flag.fromString(
-                            language['flag']!,
-                            height: 24,
-                            width: 32,
-                            borderRadius: 4,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              language['label']!,
-                              style: GoogleFonts.poppins(
-                                fontSize: 16,
-                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                                color: isSelected ? Colors.blue.shade700 : Colors.grey.shade800,
-                              ),
-                            ),
-                          ),
-                          if (isSelected)
-                            Icon(
-                              Icons.check_rounded,
-                              color: Colors.blue.shade600,
-                              size: 20,
-                            ),
-                        ],
-                      ),
-                    ),
-                  );
+              child: TextField(
+                autofocus: false,
+                onChanged: (value) {
+                  setState(() {
+                    _searchQuery = value;
+                  });
                 },
+                decoration: InputDecoration(
+                  hintText: 'Search languages...',
+                  hintStyle: GoogleFonts.poppins(
+                    color: Colors.grey.shade600,
+                    fontSize: 14,
+                  ),
+                  prefixIcon: Icon(
+                    Icons.search,
+                    color: Colors.grey.shade600,
+                    size: 20,
+                  ),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                ),
               ),
             ),
-          ],
-        ),
+          ),
+          
+          const SizedBox(height: 16),
+          
+          // Language List
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              itemCount: filteredLanguages.length,
+              itemBuilder: (context, index) {
+                final language = filteredLanguages[index];
+                final isSelected = (widget.isFrom ? widget.provider.fromLang : widget.provider.toLang) == language['value'];
+                
+                return GestureDetector(
+                  onTap: () {
+                    if (widget.isFrom) {
+                      widget.provider.setFromLang(language['value']!);
+                    } else {
+                      widget.provider.setToLang(language['value']!);
+                    }
+                    Navigator.pop(context);
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: isSelected ? Colors.blue.shade50 : Colors.transparent,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isSelected ? Colors.blue.shade200 : Colors.grey.shade200,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Flag.fromString(
+                          language['flag']!,
+                          height: 24,
+                          width: 32,
+                          borderRadius: 4,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            language['label']!,
+                            style: GoogleFonts.poppins(
+                              fontSize: 16,
+                              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                              color: isSelected ? Colors.blue.shade700 : Colors.grey.shade800,
+                            ),
+                          ),
+                        ),
+                        if (isSelected)
+                          Icon(
+                            Icons.check_rounded,
+                            color: Colors.blue.shade600,
+                            size: 20,
+                          ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          
+          // Bottom padding for safe area
+          SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
+        ],
       ),
     );
   }
