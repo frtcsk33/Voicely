@@ -2,6 +2,8 @@ class UserProfile {
   final String id;
   final String email;
   final String? fullName;
+  final String? phoneNumber;
+  final String? bio;
   final String? avatarUrl;
   final String subscriptionPlan;
   final DateTime? subscriptionExpiresAt;
@@ -22,6 +24,8 @@ class UserProfile {
     required this.id,
     required this.email,
     this.fullName,
+    this.phoneNumber,
+    this.bio,
     this.avatarUrl,
     this.subscriptionPlan = 'free',
     this.subscriptionExpiresAt,
@@ -44,6 +48,8 @@ class UserProfile {
       id: json['id'] as String,
       email: json['email'] as String,
       fullName: json['full_name'] as String?,
+      phoneNumber: json['phone_number'] as String?,
+      bio: json['bio'] as String?,
       avatarUrl: json['avatar_url'] as String?,
       subscriptionPlan: json['subscription_plan'] as String? ?? 'free',
       subscriptionExpiresAt: json['subscription_expires_at'] != null
@@ -69,6 +75,8 @@ class UserProfile {
       'id': id,
       'email': email,
       'full_name': fullName,
+      'phone_number': phoneNumber,
+      'bio': bio,
       'avatar_url': avatarUrl,
       'subscription_plan': subscriptionPlan,
       'subscription_expires_at': subscriptionExpiresAt?.toIso8601String(),
@@ -91,6 +99,8 @@ class UserProfile {
     String? id,
     String? email,
     String? fullName,
+    String? phoneNumber,
+    String? bio,
     String? avatarUrl,
     String? subscriptionPlan,
     DateTime? subscriptionExpiresAt,
@@ -111,6 +121,8 @@ class UserProfile {
       id: id ?? this.id,
       email: email ?? this.email,
       fullName: fullName ?? this.fullName,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
+      bio: bio ?? this.bio,
       avatarUrl: avatarUrl ?? this.avatarUrl,
       subscriptionPlan: subscriptionPlan ?? this.subscriptionPlan,
       subscriptionExpiresAt: subscriptionExpiresAt ?? this.subscriptionExpiresAt,

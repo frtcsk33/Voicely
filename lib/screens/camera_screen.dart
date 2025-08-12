@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:flag/flag.dart';
 import 'dart:io';
 import '../providers/translator_provider.dart';
+import '../widgets/app_drawer.dart';
 import 'pro_subscription_screen.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
@@ -33,6 +34,7 @@ class _CameraScreenState extends State<CameraScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
+      drawer: const AppDrawer(),
       appBar: AppBar(
                  title: Text(
            context.read<TranslatorProvider>().getLocalizedText('camera_translation'),

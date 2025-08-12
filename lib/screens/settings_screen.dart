@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:flag/flag.dart';
 import '../providers/translator_provider.dart';
 import '../services/auth_service.dart';
 import '../widgets/auth_state_wrapper.dart';
+import '../widgets/app_drawer.dart';
 import '../screens/auth/login_screen.dart';
+import '../screens/profile/edit_profile_screen.dart';
+import '../main.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -16,9 +18,10 @@ class SettingsScreen extends StatelessWidget {
       builder: (context, provider, child) {
         return Scaffold(
           backgroundColor: Colors.grey[50],
+          drawer: const AppDrawer(),
           appBar: AppBar(
-                    title: Text(
-          context.read<TranslatorProvider>().getLocalizedText('settings'),
+            title: Text(
+              context.read<TranslatorProvider>().getLocalizedText('settings'),
               style: GoogleFonts.poppins(
                 fontWeight: FontWeight.bold,
               ),
@@ -49,51 +52,12 @@ class SettingsScreen extends StatelessWidget {
                 child: ListTile(
                   contentPadding: const EdgeInsets.all(20),
                   leading: Icon(
-                    Icons.language,
-                    color: Colors.blue[600],
-                    size: 28,
-                  ),
-                  title:                 Text(
-                  context.read<TranslatorProvider>().getLocalizedText('app_language'),
-                    style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16,
-                    ),
-                  ),
-                  subtitle: Text(
-                    provider.appLanguages.firstWhere(
-                      (lang) => lang['value'] == provider.appLanguage,
-                    )['label']!,
-                    style: GoogleFonts.poppins(
-                      color: Colors.grey[600],
-                      fontSize: 14,
-                    ),
-                  ),
-                  trailing: Icon(
-                    Icons.arrow_forward_ios,
-                    color: Colors.grey[400],
-                    size: 16,
-                  ),
-                  onTap: () {
-                    _showLanguageDialog(context, provider);
-                  },
-                ),
-              ),
-              const SizedBox(height: 16),
-              Card(
-                elevation: 2,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: ListTile(
-                  contentPadding: const EdgeInsets.all(20),
-                  leading: Icon(
                     Icons.info_outline,
                     color: Colors.orange[600],
                     size: 28,
                   ),
-                  title:                 Text(
-                  context.read<TranslatorProvider>().getLocalizedText('about_app'),
+                  title: Text(
+                    context.read<TranslatorProvider>().getLocalizedText('about_app'),
                     style: GoogleFonts.poppins(
                       fontWeight: FontWeight.w600,
                       fontSize: 16,
@@ -118,69 +82,86 @@ class SettingsScreen extends StatelessWidget {
               ),
             ],
           ),
+          bottomNavigationBar: _buildCustomBottomNavigationBar(context),
         );
       },
     );
   }
 
-  void _showLanguageDialog(BuildContext context, TranslatorProvider provider) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title:                 Text(
-                  context.read<TranslatorProvider>().getLocalizedText('select_language'),
-            style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+  Widget _buildCustomBottomNavigationBar(BuildContext context) {
+    final translatorProvider = context.read<TranslatorProvider>();
+    
+    final items = [
+      {'icon': Icons.translate, 'label': translatorProvider.getLocalizedText('translate')},
+      {'icon': Icons.record_voice_over, 'label': 'İki Taraflı'},
+      {'icon': Icons.camera_alt, 'label': translatorProvider.getLocalizedText('camera')},
+      {'icon': Icons.menu_book, 'label': 'Books'},
+      {'icon': Icons.history, 'label': translatorProvider.getLocalizedText('history')},
+      {'icon': Icons.favorite, 'label': translatorProvider.getLocalizedText('favorites')},
+    ];
+    
+    return Container(
+      height: 70,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 8,
+            offset: Offset(0, -2),
           ),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: provider.appLanguages.length,
-              itemBuilder: (context, index) {
-                final language = provider.appLanguages[index];
-                final isSelected = language['value'] == provider.appLanguage;
-                
-                return ListTile(
-                  leading: Flag.fromString(
-                    language['flag'] ?? 'UN',
-                    height: 20,
-                    width: 30,
-                    borderRadius: 3,
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: items.asMap().entries.map((entry) {
+          final index = entry.key;
+          final item = entry.value;
+          
+          return GestureDetector(
+            onTap: () {
+              // Navigate to the corresponding page
+              _navigateToPage(context, index);
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    item['icon'] as IconData,
+                    color: Colors.grey[600],
+                    size: 24,
                   ),
-                  title: Text(
-                    language['label']!,
+                  const SizedBox(height: 4),
+                  Text(
+                    item['label'] as String,
                     style: GoogleFonts.poppins(
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                      fontSize: 10,
+                      color: Colors.grey[600],
+                      fontWeight: FontWeight.w500,
                     ),
+                    textAlign: TextAlign.center,
                   ),
-                  trailing: isSelected
-                      ? Icon(
-                          Icons.check,
-                          color: Colors.blue[600],
-                        )
-                      : null,
-                  onTap: () {
-                    provider.setAppLanguage(language['value']!);
-                    Navigator.of(context).pop();
-                  },
-                );
-              },
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(
-                context.read<TranslatorProvider>().getLocalizedText('cancel'),
-                style: GoogleFonts.poppins(),
+                ],
               ),
             ),
-          ],
-        );
-      },
+          );
+        }).toList(),
+      ),
     );
   }
+
+  void _navigateToPage(BuildContext context, int index) {
+    // Close settings and navigate to MainScreen with specific index
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(
+        builder: (context) => MainScreenWithIndex(initialIndex: index),
+      ),
+      (route) => false,
+    );
+  }
+
 
   void _showAboutDialog(BuildContext context) {
     showDialog(
@@ -336,18 +317,10 @@ class SettingsScreen extends StatelessWidget {
                 // Edit Profile Button
                 IconButton(
                   onPressed: () {
-                    // TODO: Navigate to profile edit screen
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          'Profile editing coming soon!',
-                          style: GoogleFonts.poppins(),
-                        ),
-                        backgroundColor: Colors.blue.shade600,
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const EditProfileScreen(),
                       ),
                     );
                   },
@@ -369,54 +342,7 @@ class SettingsScreen extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Column(
-            children: [
-              ListTile(
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 8,
-                ),
-                leading: Icon(
-                  Icons.security_rounded,
-                  color: Colors.orange.shade600,
-                  size: 28,
-                ),
-                title: Text(
-                  'Change Password',
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 16,
-                  ),
-                ),
-                subtitle: Text(
-                  'Update your account password',
-                  style: GoogleFonts.poppins(
-                    color: Colors.grey[600],
-                    fontSize: 14,
-                  ),
-                ),
-                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                onTap: () {
-                  // TODO: Navigate to change password screen
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Change password coming soon!',
-                        style: GoogleFonts.poppins(),
-                      ),
-                      backgroundColor: Colors.orange.shade600,
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  );
-                },
-              ),
-              
-              const Divider(height: 1),
-              
-              ListTile(
+          child: ListTile(
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 20,
                   vertical: 8,
@@ -452,9 +378,7 @@ class SettingsScreen extends StatelessWidget {
                         size: 16,
                         color: Colors.red.shade600,
                       ),
-                onTap: authService.isLoading ? null : () => _handleSignOut(context, authService),
-              ),
-            ],
+            onTap: authService.isLoading ? null : () => _handleSignOut(context, authService),
           ),
         ),
         

@@ -18,6 +18,7 @@ import 'services/user_service.dart';
 import 'providers/conversation_provider.dart';
 import 'providers/real_time_conversation_provider.dart';
 import 'widgets/auth_state_wrapper.dart';
+import 'widgets/app_drawer.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/services.dart';
 import 'services/http_overrides.dart';
@@ -199,6 +200,15 @@ class MainScreen extends StatefulWidget {
   State<MainScreen> createState() => _MainScreenState();
 }
 
+class MainScreenWithIndex extends StatefulWidget {
+  final int initialIndex;
+  
+  const MainScreenWithIndex({super.key, required this.initialIndex});
+
+  @override
+  State<MainScreenWithIndex> createState() => _MainScreenWithIndexState();
+}
+
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
@@ -215,6 +225,81 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     final translatorProvider = context.read<TranslatorProvider>();
     return Scaffold(
+      drawer: const AppDrawer(),
+      body: _screens[_currentIndex],
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: Colors.white,
+        selectedItemColor: Colors.blue[600],
+        unselectedItemColor: Colors.grey[600],
+        selectedLabelStyle: GoogleFonts.poppins(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+        unselectedLabelStyle: GoogleFonts.poppins(
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+        ),
+        items: [
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.translate),
+            label: translatorProvider.getLocalizedText('translate'),
+          ),
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.record_voice_over),
+            label: 'İki Taraflı',
+          ),
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.camera_alt),
+            label: translatorProvider.getLocalizedText('camera'),
+          ),
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.menu_book),
+            label: 'Books',
+          ),
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.history),
+            label: translatorProvider.getLocalizedText('history'),
+          ),
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.favorite),
+            label: translatorProvider.getLocalizedText('favorites'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MainScreenWithIndexState extends State<MainScreenWithIndex> {
+  late int _currentIndex;
+
+  final List<Widget> _screens = [
+    const AIHomepage(),
+    const RealTimeConversationScreen(),
+    const CameraScreen(),
+    const BooksScreen(),
+    const HistoryScreen(),
+    const FavoritesScreen(),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final translatorProvider = context.read<TranslatorProvider>();
+    return Scaffold(
+      drawer: const AppDrawer(),
       body: _screens[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,

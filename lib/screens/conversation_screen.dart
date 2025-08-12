@@ -6,6 +6,7 @@ import '../providers/conversation_provider.dart';
 import '../providers/translator_provider.dart';
 import '../widgets/conversation_panel.dart';
 import '../widgets/language_selector.dart';
+import '../widgets/app_drawer.dart';
 
 class ConversationScreen extends StatefulWidget {
   const ConversationScreen({super.key});
@@ -27,6 +28,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
+      drawer: const AppDrawer(),
       appBar: AppBar(
         title: Text(
           'Conversation Mode',

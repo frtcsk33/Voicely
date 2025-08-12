@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../providers/translator_provider.dart';
+import '../widgets/app_drawer.dart';
 
 class ProSubscriptionScreen extends StatefulWidget {
   const ProSubscriptionScreen({super.key});
@@ -65,6 +66,7 @@ class _ProSubscriptionScreenState extends State<ProSubscriptionScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
+      drawer: const AppDrawer(),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,

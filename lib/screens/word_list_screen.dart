@@ -7,6 +7,7 @@ import '../models/book_category.dart';
 import '../models/word.dart';
 import '../services/books_service.dart';
 import '../providers/translator_provider.dart';
+import '../widgets/app_drawer.dart';
 
 class WordListScreen extends StatefulWidget {
   final BookCategory category;
@@ -84,6 +85,7 @@ class _WordListScreenState extends State<WordListScreen>
     
     return Scaffold(
       backgroundColor: Colors.grey[50],
+      drawer: const AppDrawer(),
       appBar: AppBar(
         title: Text(
           widget.category.name,

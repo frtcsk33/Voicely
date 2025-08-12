@@ -395,6 +395,35 @@ class AuthService extends ChangeNotifier {
     _errorMessage = null;
   }
 
+  /// Change user password
+  Future<bool> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    try {
+      _setLoading(true);
+      _clearError();
+
+      // Demo mode - simulate password change
+      if (SupabaseConfig.supabaseUrl.contains('your-project-ref')) {
+        await Future.delayed(const Duration(seconds: 1));
+        return true;
+      }
+
+      // Production mode - use Supabase auth
+      await supabase.auth.updateUser(
+        UserAttributes(password: newPassword),
+      );
+
+      return true;
+    } catch (e) {
+      _setError('Failed to change password: ${e.toString()}');
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
   /// Clear error message (public method)
   void clearError() {
     _clearError();

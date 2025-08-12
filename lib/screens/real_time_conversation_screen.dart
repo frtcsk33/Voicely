@@ -7,6 +7,7 @@ import '../providers/translator_provider.dart';
 import '../widgets/conversation_card.dart';
 import '../widgets/mic_button.dart';
 import '../widgets/language_selector.dart';
+import '../widgets/app_drawer.dart';
 
 class RealTimeConversationScreen extends StatefulWidget {
   const RealTimeConversationScreen({super.key});
@@ -30,6 +31,7 @@ class _RealTimeConversationScreenState extends State<RealTimeConversationScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
+      drawer: const AppDrawer(),
       appBar: AppBar(
         title: Text(
           'İki Taraflı Çeviri',

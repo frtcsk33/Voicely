@@ -663,6 +663,20 @@ class TranslatorProvider with ChangeNotifier {
         return 'Kelime bulunamadı';
       case 'try_different_search':
         return 'Farklı bir arama deneyin';
+      case 'about':
+        return 'Hakkında';
+      case 'app_info':
+        return 'Uygulama bilgileri';
+      case 'unlock_features':
+        return 'Premium özelliklerin kilidini açın';
+      case 'app_preferences':
+        return 'Uygulama tercihleri';
+      case 'logout_account':
+        return 'Hesaptan çıkış yap';
+      case 'privacy_info':
+        return 'Gizlilik bilgileri';
+      case 'premium':
+        return 'Premium';
       default:
         return key;
     }

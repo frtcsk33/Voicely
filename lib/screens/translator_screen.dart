@@ -8,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flag/flag.dart';
 import '../providers/translator_provider.dart';
 import '../widgets/searchable_language_dropdown.dart';
+import '../widgets/app_drawer.dart';
 
 class TranslatorScreen extends StatefulWidget {
   const TranslatorScreen({Key? key}) : super(key: key);
@@ -54,6 +55,7 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
 
         return Scaffold(
           backgroundColor: Colors.grey[50],
+          drawer: const AppDrawer(),
           resizeToAvoidBottomInset: true,
           body: SafeArea(
             child: Column(
@@ -73,6 +75,15 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
                   ),
                   child: Row(
                     children: [
+                      // Drawer Menu Button
+                      Builder(
+                        builder: (context) => IconButton(
+                          icon: const Icon(Icons.menu_rounded),
+                          onPressed: () => Scaffold.of(context).openDrawer(),
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
                       // Source Language Dropdown
                       Expanded(
                         child: SearchableLanguageDropdown(

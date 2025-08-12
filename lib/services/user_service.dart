@@ -21,6 +21,8 @@ class UserService extends ChangeNotifier {
   
   // User profile getters
   String? get displayName => _currentUserProfile?.displayName;
+  String? get phoneNumber => _currentUserProfile?.phoneNumber;
+  String? get bio => _currentUserProfile?.bio;
   bool get isPro => _currentUserProfile?.isPro ?? false;
   bool get canTranslate => _currentUserProfile?.canTranslate ?? true;
   int get translationsRemaining => _currentUserProfile?.translationsRemaining ?? 50;
@@ -305,6 +307,43 @@ class UserService extends ChangeNotifier {
       if (kDebugMode) {
         print('Error resetting daily translations: $e');
       }
+    }
+  }
+
+  /// Update user profile with new information
+  Future<bool> updateProfile({
+    String? displayName,
+    String? phoneNumber,
+    String? bio,
+  }) async {
+    try {
+      _setLoading(true);
+      _clearError();
+
+      if (_currentUserProfile == null) {
+        throw Exception('No user profile loaded');
+      }
+
+      // Update the profile
+      final updatedProfile = _currentUserProfile!.copyWith(
+        fullName: displayName,
+        phoneNumber: phoneNumber,
+        bio: bio,
+        updatedAt: DateTime.now(),
+      );
+
+      final success = await saveUserProfile(updatedProfile);
+      if (success) {
+        _currentUserProfile = updatedProfile;
+        notifyListeners();
+      }
+
+      return success;
+    } catch (e) {
+      _setError('Failed to update profile: $e');
+      return false;
+    } finally {
+      _setLoading(false);
     }
   }
 

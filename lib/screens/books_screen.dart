@@ -6,6 +6,7 @@ import 'package:share_plus/share_plus.dart';
 import '../models/book_category.dart';
 import '../services/books_service.dart';
 import '../providers/translator_provider.dart';
+import '../widgets/app_drawer.dart';
 import 'word_list_screen.dart';
 
 class BooksScreen extends StatefulWidget {
@@ -66,6 +67,7 @@ class _BooksScreenState extends State<BooksScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
+      drawer: const AppDrawer(),
       appBar: AppBar(
         title: Text(
           'Books',
