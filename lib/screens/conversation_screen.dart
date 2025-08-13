@@ -4,9 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flag/flag.dart';
 import '../providers/conversation_provider.dart';
 import '../providers/translator_provider.dart';
-import '../widgets/conversation_panel.dart';
-import '../widgets/language_selector.dart';
 import '../widgets/app_drawer.dart';
+import '../models/chat_message.dart';
 
 class ConversationScreen extends StatefulWidget {
   const ConversationScreen({super.key});
@@ -58,52 +57,44 @@ class _ConversationScreenState extends State<ConversationScreen> {
                 // Language Selector
                 const ConversationLanguageSelector(),
                 
-                // Conversation panels with flexible height
+                // Chat Messages Area
                 Expanded(
-                  child: Column(
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    child: ListView.builder(
+                      itemCount: conversationProvider.chatMessages.length,
+                      itemBuilder: (context, index) {
+                        final message = conversationProvider.chatMessages[index];
+                        return _buildChatBubble(message, conversationProvider);
+                      },
+                    ),
+                  ),
+                ),
+                
+                // Microphone Buttons
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  child: Row(
                     children: [
-                      // Top panel (Language 1 -> Language 2)
-                      Flexible(
-                        flex: 1,
-                        child: ConversationPanel(
-                          isTopPanel: true,
-                          sourceLanguage: conversationProvider.language1,
-                          targetLanguage: conversationProvider.language2,
-                          sourceLanguageName: conversationProvider.language1Name,
-                          targetLanguageName: conversationProvider.language2Name,
-                          isListening: conversationProvider.isListeningTop,
-                          transcribedText: conversationProvider.topTranscribedText,
-                          translatedText: conversationProvider.topTranslatedText,
-                          onMicPressed: () => conversationProvider.toggleListening(true),
-                          backgroundColor: const Color(0xFFF1F5F9),
-                          micColor: const Color(0xFF3B82F6),
+                      // Left Language Microphone
+                      Expanded(
+                        child: _buildMicrophoneButton(
+                          context,
+                          conversationProvider.language1Name,
+                          conversationProvider.isListeningTop,
+                          () => conversationProvider.toggleListening(true),
+                          const Color(0xFF3B82F6),
                         ),
                       ),
-                      
-                      // Divider
-                      Container(
-                        height: 1,
-                        color: const Color(0xFFE2E8F0),
-                      ),
-                      
-                      // Bottom panel (Language 2 -> Language 1)  
-                      Flexible(
-                        flex: 1,
-                        child: Transform.rotate(
-                          angle: 3.14159, // 180 degrees
-                          child: ConversationPanel(
-                            isTopPanel: false,
-                            sourceLanguage: conversationProvider.language2,
-                            targetLanguage: conversationProvider.language1,
-                            sourceLanguageName: conversationProvider.language2Name,
-                            targetLanguageName: conversationProvider.language1Name,
-                            isListening: conversationProvider.isListeningBottom,
-                            transcribedText: conversationProvider.bottomTranscribedText,
-                            translatedText: conversationProvider.bottomTranslatedText,
-                            onMicPressed: () => conversationProvider.toggleListening(false),
-                            backgroundColor: const Color(0xFFFEF7F0),
-                            micColor: const Color(0xFFEF4444),
-                          ),
+                      const SizedBox(width: 20),
+                      // Right Language Microphone  
+                      Expanded(
+                        child: _buildMicrophoneButton(
+                          context,
+                          conversationProvider.language2Name,
+                          conversationProvider.isListeningBottom,
+                          () => conversationProvider.toggleListening(false),
+                          const Color(0xFFEF4444),
                         ),
                       ),
                     ],
@@ -116,6 +107,158 @@ class _ConversationScreenState extends State<ConversationScreen> {
       ),
     );
   }
+
+  Widget _buildChatBubble(ChatMessage message, ConversationProvider provider) {
+    final isUser = message.isUser;
+    final isFromLeftMic = message.isFromLeftMic;
+    
+    // Left mic (blue), Right mic (red)
+    final bubbleColor = isFromLeftMic ? const Color(0xFF3B82F6) : const Color(0xFFEF4444);
+    final textColor = Colors.white;
+    
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (!isUser) const SizedBox(width: 0),
+          Flexible(
+            child: Container(
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width * 0.75,
+              ),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: bubbleColor,
+                borderRadius: BorderRadius.only(
+                  topLeft: const Radius.circular(20),
+                  topRight: const Radius.circular(20),
+                  bottomLeft: Radius.circular(isUser ? 20 : 4),
+                  bottomRight: Radius.circular(isUser ? 4 : 20),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Original text
+                  Text(
+                    message.originalText,
+                    style: GoogleFonts.poppins(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: textColor,
+                      height: 1.4,
+                    ),
+                  ),
+                  if (message.translatedText.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Container(
+                      height: 1,
+                      color: Colors.white.withOpacity(0.3),
+                    ),
+                    const SizedBox(height: 8),
+                    // Translated text with speaker icon
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            message.translatedText,
+                            style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              color: textColor.withOpacity(0.9),
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        GestureDetector(
+                          onTap: () {
+                            // Handle text-to-speech
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(
+                              Icons.volume_up_rounded,
+                              size: 16,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+          if (isUser) const SizedBox(width: 0),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMicrophoneButton(
+    BuildContext context,
+    String languageName,
+    bool isListening,
+    VoidCallback onPressed,
+    Color color,
+  ) {
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
+        height: 80,
+        decoration: BoxDecoration(
+          color: isListening ? color : Colors.white,
+          borderRadius: BorderRadius.circular(40),
+          border: Border.all(
+            color: color,
+            width: 2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(isListening ? 0.3 : 0.1),
+              blurRadius: 12,
+              spreadRadius: 0,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              isListening ? Icons.mic : Icons.mic_none_rounded,
+              color: isListening ? Colors.white : color,
+              size: 24,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              languageName,
+              style: GoogleFonts.poppins(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: isListening ? Colors.white : color,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
 
 }
 

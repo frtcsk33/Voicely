@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:convert';
 import 'dart:async';
+import '../services/backend_translation_service.dart';
 
 class TranslatorProvider with ChangeNotifier {
   final SpeechToText _speechToText = SpeechToText();
@@ -2062,24 +2063,16 @@ class TranslatorProvider with ChangeNotifier {
       _detectedLanguage = null; // Auto detect değilse temizle
     }
     
-    // LibreTranslate API kullanımı (ücretsiz)
-    final response = await http.post(
-      Uri.parse('https://libretranslate.de/translate'),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: json.encode({
-        'q': textToTranslate,
-        'source': sourceLanguage,
-        'target': _toLang,
-        'format': 'text',
-      }),
-    );
-    
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      if (data['translatedText'] != null) {
-        _translatedText = data['translatedText'];
+    try {
+      // Backend translation service kullan (DeepL -> Google fallback)
+      final translatedText = await BackendTranslationService.translateText(
+        text: textToTranslate,
+        sourceLanguage: sourceLanguage,
+        targetLanguage: _toLang,
+      );
+      
+      if (translatedText.isNotEmpty) {
+        _translatedText = translatedText;
         _addToHistory();
         _updateFavoriteStatus();
         
@@ -2088,7 +2081,10 @@ class TranslatorProvider with ChangeNotifier {
       } else {
         _translatedText = 'Çeviri bulunamadı';
       }
-    } else {
+    } catch (e) {
+      if (kDebugMode) {
+        print('Backend translation failed, using fallback: $e');
+      }
       // Fallback olarak MyMemory API kullan
       await _translateWithMyMemory(textToTranslate);
     }
@@ -2439,31 +2435,22 @@ class TranslatorProvider with ChangeNotifier {
 
   Future<String> translateTextFromImage(String text, String targetLanguage) async {
     try {
-      final response = await http.post(
-        Uri.parse('https://translate.googleapis.com/translate_a/single'),
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: {
-          'client': 'gtx',
-          'sl': 'auto',
-          'tl': targetLanguage,
-          'dt': 't',
-          'q': text,
-        },
+      // Backend translation service kullan
+      final translatedText = await BackendTranslationService.translateText(
+        text: text,
+        sourceLanguage: 'auto', // Auto-detect source language
+        targetLanguage: targetLanguage,
       );
       
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (data[0] != null && data[0].isNotEmpty) {
-          return data[0][0][0];
-        } else {
-          return 'Çeviri başarısız.';
-        }
+      if (translatedText.isNotEmpty) {
+        return translatedText;
       } else {
         return 'Çeviri başarısız.';
       }
     } catch (e) {
+      if (kDebugMode) {
+        print('Image translation error: $e');
+      }
       return 'Çeviri hatası: $e';
     }
   }

@@ -214,7 +214,7 @@ class _MainScreenState extends State<MainScreen> {
 
   final List<Widget> _screens = [
     const AIHomepage(),
-    const RealTimeConversationScreen(),
+    const ConversationScreen(),
     const CameraScreen(),
     const BooksScreen(),
     const HistoryScreen(),
@@ -282,7 +282,7 @@ class _MainScreenWithIndexState extends State<MainScreenWithIndex> {
 
   final List<Widget> _screens = [
     const AIHomepage(),
-    const RealTimeConversationScreen(),
+    const ConversationScreen(),
     const CameraScreen(),
     const BooksScreen(),
     const HistoryScreen(),

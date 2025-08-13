@@ -286,11 +286,14 @@ class EnhancedSpeechService {
   }
 }
 
-/// Enhanced translation service with better error handling
+/// Enhanced translation service with DeepL API
 class EnhancedTranslationService {
+  static const String _deepLApiUrl = 'https://api-free.deepl.com/v2/translate';
+  static const String _deepLApiKey = 'a0e3606c-7668-4190-a234-f93af6230fb9:fx';
+  
+  // Fallback services (kept for backup)
   static const String _libreTranslateUrl = 'https://libretranslate.com/translate';
   static const String _backupTranslateUrl = 'https://translate.astian.org/translate';
-  static const String _thirdTranslateUrl = 'https://translate.terraprint.co/translate';
   
   /// Translate text from source language to target language
   static Future<String> translateText({
@@ -302,7 +305,24 @@ class EnhancedTranslationService {
       return '';
     }
     
-    // Try primary translation service
+    // Try DeepL API first (most reliable)
+    try {
+      final result = await _tryDeepLTranslation(
+        text: text,
+        sourceLanguage: sourceLanguage,
+        targetLanguage: targetLanguage,
+      );
+      
+      if (result.isNotEmpty) {
+        return result;
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('DeepL translation failed: $e');
+      }
+    }
+    
+    // Try LibreTranslate as fallback
     try {
       final result = await _tryTranslation(
         url: _libreTranslateUrl,
@@ -316,7 +336,7 @@ class EnhancedTranslationService {
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Primary translation failed: $e');
+        print('LibreTranslate fallback failed: $e');
       }
     }
     
@@ -337,34 +357,87 @@ class EnhancedTranslationService {
         print('Backup translation failed: $e');
       }
     }
+    
+    // If all services fail, try mock translation for any language pair
+    final mockResult = _getMockTranslation(text, sourceLanguage, targetLanguage);
+    if (mockResult.isNotEmpty && !mockResult.contains('Translation unavailable')) {
+      return mockResult;
+    }
+    
+    // If even mock fails, return a formatted fallback
+    return _getFallbackTranslation(text, sourceLanguage, targetLanguage);
+  }
 
-    // Try third translation service
-    try {
-      final result = await _tryTranslation(
-        url: _thirdTranslateUrl,
-        text: text,
-        sourceLanguage: sourceLanguage,
-        targetLanguage: targetLanguage,
-      );
-      
-      if (result.isNotEmpty) {
-        return result;
+  /// Try DeepL translation service
+  static Future<String> _tryDeepLTranslation({
+    required String text,
+    required String sourceLanguage,
+    required String targetLanguage,
+  }) async {
+    // Convert language codes to DeepL format
+    final deepLSource = _convertToDeepLLanguageCode(sourceLanguage);
+    final deepLTarget = _convertToDeepLLanguageCode(targetLanguage);
+    
+    final response = await http.post(
+      Uri.parse(_deepLApiUrl),
+      headers: {
+        'Authorization': 'DeepL-Auth-Key $_deepLApiKey',
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: {
+        'text': text,
+        'source_lang': deepLSource,
+        'target_lang': deepLTarget,
+      },
+    ).timeout(const Duration(seconds: 10));
+    
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final translations = data['translations'] as List?;
+      if (translations != null && translations.isNotEmpty) {
+        return translations[0]['text'] ?? '';
       }
-    } catch (e) {
-      if (kDebugMode) {
-        print('Third translation failed: $e');
-      }
+    } else {
+      throw Exception('DeepL API returned ${response.statusCode}: ${response.body}');
     }
     
-    // If all services fail, try a simple mock translation for demo
-    if (sourceLanguage == 'tr' && targetLanguage == 'en') {
-      return _getMockTranslation(text, 'en');
-    } else if (sourceLanguage == 'en' && targetLanguage == 'tr') {
-      return _getMockTranslation(text, 'tr');
-    }
+    return '';
+  }
+
+  /// Convert language codes to DeepL format
+  static String _convertToDeepLLanguageCode(String languageCode) {
+    final Map<String, String> deepLLanguageCodes = {
+      'en': 'EN',
+      'tr': 'TR',
+      'es': 'ES',
+      'fr': 'FR',
+      'de': 'DE',
+      'it': 'IT',
+      'pt': 'PT',
+      'ru': 'RU',
+      'ja': 'JA',
+      'ko': 'KO',
+      'zh': 'ZH',
+      'ar': 'AR',
+      'nl': 'NL',
+      'pl': 'PL',
+      'sv': 'SV',
+      'da': 'DA',
+      'fi': 'FI',
+      'el': 'EL',
+      'cs': 'CS',
+      'et': 'ET',
+      'hu': 'HU',
+      'lv': 'LV',
+      'lt': 'LT',
+      'sk': 'SK',
+      'sl': 'SL',
+      'bg': 'BG',
+      'ro': 'RO',
+      'uk': 'UK',
+    };
     
-    // If both services fail, return original text with error indicator
-    return '$text (Translation unavailable)';
+    return deepLLanguageCodes[languageCode] ?? languageCode.toUpperCase();
   }
   
   static Future<String> _tryTranslation({
@@ -395,7 +468,7 @@ class EnhancedTranslationService {
   }
 
   /// Fallback mock translation for demo purposes
-  static String _getMockTranslation(String text, String targetLanguage) {
+  static String _getMockTranslation(String text, String sourceLanguage, String targetLanguage) {
     final Map<String, Map<String, String>> mockTranslations = {
       'tr': {
         'hello': 'merhaba',
@@ -434,9 +507,32 @@ class EnhancedTranslationService {
       }
     }
     
-    // Return a generic translated message if no match found
-    return targetLanguage == 'tr' 
-      ? '[Türkçe çeviri: $text]'
-      : '[English translation: $text]';
+    // If no direct translation found, return empty to trigger fallback
+    return '';
+  }
+
+  /// Generate a fallback translation when all services fail
+  static String _getFallbackTranslation(String text, String sourceLanguage, String targetLanguage) {
+    // Get language names for better user experience
+    final Map<String, String> languageNames = {
+      'tr': 'Turkish',
+      'en': 'English',
+      'es': 'Spanish',
+      'fr': 'French',
+      'de': 'German',
+      'it': 'Italian',
+      'pt': 'Portuguese',
+      'ru': 'Russian',
+      'ja': 'Japanese',
+      'ko': 'Korean',
+      'zh': 'Chinese',
+      'ar': 'Arabic',
+    };
+
+    final sourceName = languageNames[sourceLanguage] ?? sourceLanguage.toUpperCase();
+    final targetName = languageNames[targetLanguage] ?? targetLanguage.toUpperCase();
+    
+    // Return a user-friendly message indicating the translation direction
+    return '[$targetName: $text]';
   }
 }

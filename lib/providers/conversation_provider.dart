@@ -1,7 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import '../services/enhanced_speech_service.dart';
+import '../services/backend_translation_service.dart';
 import '../services/user_service.dart';
+import '../models/chat_message.dart';
 
 class ConversationProvider extends ChangeNotifier {
   // Speech services
@@ -35,6 +37,9 @@ class ConversationProvider extends ChangeNotifier {
   String? _errorMessage;
   bool _isInitialized = false;
   
+  // Chat messages
+  final List<ChatMessage> _chatMessages = [];
+  
   // Getters
   String get language1 => _language1;
   String get language1Name => _language1Name;
@@ -54,6 +59,8 @@ class ConversationProvider extends ChangeNotifier {
   
   String? get errorMessage => _errorMessage;
   bool get isInitialized => _isInitialized;
+  
+  List<ChatMessage> get chatMessages => List.unmodifiable(_chatMessages);
   
   /// Set user service for translation tracking
   void setUserService(UserService userService) {
@@ -232,7 +239,7 @@ class ConversationProvider extends ChangeNotifier {
       final sourceLanguage = isTopPanel ? _language1 : _language2;
       final targetLanguage = isTopPanel ? _language2 : _language1;
       
-      final translatedText = await EnhancedTranslationService.translateText(
+      final translatedText = await BackendTranslationService.translateText(
         text: text,
         sourceLanguage: sourceLanguage,
         targetLanguage: targetLanguage,
@@ -245,6 +252,16 @@ class ConversationProvider extends ChangeNotifier {
         _bottomTranslatedText = translatedText;
       }
       
+      // Add message to chat
+      _addChatMessage(
+        originalText: text,
+        translatedText: translatedText,
+        isUser: !isTopPanel,
+        sourceLanguage: sourceLanguage,
+        targetLanguage: targetLanguage,
+        isFromLeftMic: isTopPanel,
+      );
+      
       notifyListeners();
       
       // Auto-play translation if enabled
@@ -253,7 +270,20 @@ class ConversationProvider extends ChangeNotifier {
       }
       
     } catch (e) {
-      _errorMessage = 'Translation failed: $e';
+      // Even if translation fails, add the original text to chat
+      final sourceLanguage = isTopPanel ? _language1 : _language2;
+      final targetLanguage = isTopPanel ? _language2 : _language1;
+      
+      _addChatMessage(
+        originalText: text,
+        translatedText: 'Translation service temporarily unavailable',
+        isUser: !isTopPanel,
+        sourceLanguage: sourceLanguage,
+        targetLanguage: targetLanguage,
+        isFromLeftMic: isTopPanel,
+      );
+      
+      _errorMessage = 'Translation temporarily unavailable';
       if (kDebugMode) {
         print('Translation error: $e');
       }
@@ -284,6 +314,29 @@ class ConversationProvider extends ChangeNotifier {
   /// Track translation usage
   void _trackTranslationUsage() {
     _userService?.incrementTranslationCount();
+  }
+  
+  /// Add a new chat message
+  void _addChatMessage({
+    required String originalText,
+    required String translatedText,
+    required bool isUser,
+    required String sourceLanguage,
+    required String targetLanguage,
+    required bool isFromLeftMic,
+  }) {
+    final message = ChatMessage(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      originalText: originalText,
+      translatedText: translatedText,
+      isUser: isUser,
+      sourceLanguage: sourceLanguage,
+      targetLanguage: targetLanguage,
+      timestamp: DateTime.now(),
+      isFromLeftMic: isFromLeftMic,
+    );
+    
+    _chatMessages.add(message);
   }
   
   /// Set language 1
@@ -341,6 +394,7 @@ class ConversationProvider extends ChangeNotifier {
     _bottomTranscribedText = '';
     _bottomTranslatedText = '';
     _errorMessage = null;
+    _chatMessages.clear();
     
     // Stop any active listening
     if (_isListeningTop || _isListeningBottom) {
