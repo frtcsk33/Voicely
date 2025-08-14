@@ -27,77 +27,38 @@ class _ConversationScreenState extends State<ConversationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      drawer: const AppDrawer(),
-      appBar: AppBar(
-        title: Text(
-          'Conversation Mode',
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.w600,
-            color: const Color(0xFF1E293B),
-          ),
-        ),
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-        iconTheme: const IconThemeData(color: Color(0xFF1E293B)),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              context.read<ConversationProvider>().clearConversation();
-            },
-            tooltip: 'Clear conversation',
-          ),
-        ],
-      ),
       body: Consumer2<ConversationProvider, TranslatorProvider>(
         builder: (context, conversationProvider, translatorProvider, child) {
           return SafeArea(
-            child: Column(
+            child: Stack(
               children: [
-                // Language Selector
-                const ConversationLanguageSelector(),
+                _buildSplitScreenLayout(conversationProvider, translatorProvider),
                 
-                // Chat Messages Area
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    child: ListView.builder(
-                      itemCount: conversationProvider.chatMessages.length,
-                      itemBuilder: (context, index) {
-                        final message = conversationProvider.chatMessages[index];
-                        return _buildChatBubble(message, conversationProvider);
-                      },
+                // Floating History Button
+                Positioned(
+                  top: 16,
+                  right: 16,
+                  child: GestureDetector(
+                    onTap: () => _showConversationHistory(context, conversationProvider),
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.15),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        Icons.history_rounded,
+                        color: Colors.grey.shade600,
+                        size: 24,
+                      ),
                     ),
-                  ),
-                ),
-                
-                // Microphone Buttons
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  child: Row(
-                    children: [
-                      // Left Language Microphone
-                      Expanded(
-                        child: _buildMicrophoneButton(
-                          context,
-                          conversationProvider.language1Name,
-                          conversationProvider.isListeningTop,
-                          () => conversationProvider.toggleListening(true),
-                          const Color(0xFF3B82F6),
-                        ),
-                      ),
-                      const SizedBox(width: 20),
-                      // Right Language Microphone  
-                      Expanded(
-                        child: _buildMicrophoneButton(
-                          context,
-                          conversationProvider.language2Name,
-                          conversationProvider.isListeningBottom,
-                          () => conversationProvider.toggleListening(false),
-                          const Color(0xFFEF4444),
-                        ),
-                      ),
-                    ],
                   ),
                 ),
               ],
@@ -108,150 +69,182 @@ class _ConversationScreenState extends State<ConversationScreen> {
     );
   }
 
-  Widget _buildChatBubble(ChatMessage message, ConversationProvider provider) {
-    final isUser = message.isUser;
-    final isFromLeftMic = message.isFromLeftMic;
-    
-    // Left mic (blue), Right mic (red)
-    final bubbleColor = isFromLeftMic ? const Color(0xFF3B82F6) : const Color(0xFFEF4444);
-    final textColor = Colors.white;
-    
+
+  Widget _buildSplitScreenLayout(ConversationProvider conversationProvider, TranslatorProvider translatorProvider) {
+    return Column(
+      children: [
+        // User A Area (Top) - Rotated 180 degrees
+        Expanded(
+          child: Transform.rotate(
+            angle: 3.14159, // 180 degrees in radians
+            child: _buildUserArea(
+              conversationProvider,
+              translatorProvider,
+              isUserA: true,
+              messages: conversationProvider.chatMessages.where((msg) => msg.isFromLeftMic).toList(),
+              backgroundColor: const Color(0xFFEF4444).withOpacity(0.05),
+              accentColor: const Color(0xFFEF4444),
+              isListening: conversationProvider.isListeningTop,
+            ),
+          ),
+        ),
+        
+        // Divider
+        Container(
+          height: 2,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                const Color(0xFFEF4444).withOpacity(0.3),
+                const Color(0xFF3B82F6).withOpacity(0.3),
+              ],
+            ),
+          ),
+        ),
+        
+        // User B Area (Bottom) - Normal orientation
+        Expanded(
+          child: _buildUserArea(
+            conversationProvider,
+            translatorProvider,
+            isUserA: false,
+            messages: conversationProvider.chatMessages.where((msg) => !msg.isFromLeftMic).toList(),
+            backgroundColor: const Color(0xFF3B82F6).withOpacity(0.05),
+            accentColor: const Color(0xFF3B82F6),
+            isListening: conversationProvider.isListeningBottom,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildUserArea(
+    ConversationProvider conversationProvider,
+    TranslatorProvider translatorProvider, {
+    required bool isUserA,
+    required List<ChatMessage> messages,
+    required Color backgroundColor,
+    required Color accentColor,
+    required bool isListening,
+  }) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      child: Row(
-        mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.start,
+      decoration: BoxDecoration(
+        color: backgroundColor,
+      ),
+      child: Stack(
         children: [
-          if (!isUser) const SizedBox(width: 0),
-          Flexible(
-            child: Container(
-              constraints: BoxConstraints(
-                maxWidth: MediaQuery.of(context).size.width * 0.75,
-              ),
+          // Messages Area
+          Positioned.fill(
+            child: Padding(
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: bubbleColor,
-                borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(20),
-                  topRight: const Radius.circular(20),
-                  bottomLeft: Radius.circular(isUser ? 20 : 4),
-                  bottomRight: Radius.circular(isUser ? 4 : 20),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Original text
-                  Text(
-                    message.originalText,
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: textColor,
-                      height: 1.4,
+                  // Language Selector
+                  _buildLanguageSelector(
+                    conversationProvider,
+                    translatorProvider,
+                    isUserA,
+                    accentColor,
+                  ),
+                  const SizedBox(height: 12),
+                  
+                  // Status Indicator
+                  _buildStatusIndicator(isListening, accentColor, isUserA),
+                  const SizedBox(height: 8),
+                  
+                  // Messages
+                  Expanded(
+                    child: ListView.builder(
+                      reverse: true,
+                      itemCount: messages.length,
+                      itemBuilder: (context, index) {
+                        final message = messages[messages.length - 1 - index];
+                        return _buildSplitChatBubble(message, accentColor, isUserA, conversationProvider);
+                      },
                     ),
                   ),
-                  if (message.translatedText.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    Container(
-                      height: 1,
-                      color: Colors.white.withOpacity(0.3),
-                    ),
-                    const SizedBox(height: 8),
-                    // Translated text with speaker icon
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            message.translatedText,
-                            style: GoogleFonts.poppins(
-                              fontSize: 14,
-                              color: textColor.withOpacity(0.9),
-                              height: 1.4,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        GestureDetector(
-                          onTap: () {
-                            // Handle text-to-speech
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Icon(
-                              Icons.volume_up_rounded,
-                              size: 16,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
                 ],
               ),
             ),
           ),
-          if (isUser) const SizedBox(width: 0),
+          
+          // Floating Microphone Button (Bottom Right)
+          Positioned(
+            bottom: 20,
+            right: 20,
+            child: _buildFloatingMicButton(
+              conversationProvider,
+              isUserA,
+              accentColor,
+              isListening,
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildMicrophoneButton(
-    BuildContext context,
-    String languageName,
-    bool isListening,
-    VoidCallback onPressed,
-    Color color,
+  Widget _buildLanguageSelector(
+    ConversationProvider conversationProvider,
+    TranslatorProvider translatorProvider,
+    bool isUserA,
+    Color accentColor,
   ) {
+    final currentLanguage = isUserA ? conversationProvider.language1 : conversationProvider.language2;
+    final currentLanguageName = isUserA ? conversationProvider.language1Name : conversationProvider.language2Name;
+    
+    // Dil listesinden flag bilgisini al
+    final language = translatorProvider.languages.firstWhere(
+      (lang) => lang['value'] == currentLanguage,
+      orElse: () => {'label': currentLanguageName, 'value': currentLanguage, 'flag': 'GB'},
+    );
+    
     return GestureDetector(
-      onTap: onPressed,
+      onTap: () => _showConversationLanguagePicker(
+        conversationProvider,
+        translatorProvider,
+        isUserA,
+      ),
       child: Container(
-        height: 80,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: isListening ? color : Colors.white,
-          borderRadius: BorderRadius.circular(40),
+          color: Colors.white.withOpacity(0.9),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: color,
-            width: 2,
+            color: accentColor.withOpacity(0.3),
+            width: 1.5,
           ),
           boxShadow: [
             BoxShadow(
-              color: color.withOpacity(isListening ? 0.3 : 0.1),
-              blurRadius: 12,
-              spreadRadius: 0,
-              offset: const Offset(0, 4),
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              isListening ? Icons.mic : Icons.mic_none_rounded,
-              color: isListening ? Colors.white : color,
-              size: 24,
+            Flag.fromString(
+              language['flag']!,
+              height: 18,
+              width: 24,
+              borderRadius: 3,
             ),
             const SizedBox(width: 8),
             Text(
-              languageName,
+              currentLanguageName,
               style: GoogleFonts.poppins(
-                fontSize: 16,
+                fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: isListening ? Colors.white : color,
+                color: accentColor,
               ),
+            ),
+            const SizedBox(width: 6),
+            Icon(
+              Icons.keyboard_arrow_down_rounded,
+              color: accentColor,
+              size: 18,
             ),
           ],
         ),
@@ -259,165 +252,11 @@ class _ConversationScreenState extends State<ConversationScreen> {
     );
   }
 
-
-}
-
-class ConversationLanguageSelector extends StatelessWidget {
-  const ConversationLanguageSelector({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    
-    return Consumer2<ConversationProvider, TranslatorProvider>(
-      builder: (context, conversationProvider, translatorProvider, child) {
-        return Container(
-          width: screenWidth * 0.95,
-          padding: const EdgeInsets.all(16),
-          margin: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 5),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              // From Language
-              Expanded(
-                child: _buildLanguageButton(
-                  context,
-                  conversationProvider,
-                  translatorProvider,
-                  conversationProvider.language1,
-                  'From',
-                  true,
-                  translatorProvider.languages,
-                ),
-              ),
-              
-              // Swap Button
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: GestureDetector(
-                  onTap: () => conversationProvider.swapLanguages(),
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade100,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(
-                      Icons.swap_horiz_rounded,
-                      color: Colors.grey.shade600,
-                      size: 20,
-                    ),
-                  ),
-                ),
-              ),
-              
-              // To Language
-              Expanded(
-                child: _buildLanguageButton(
-                  context,
-                  conversationProvider,
-                  translatorProvider,
-                  conversationProvider.language2,
-                  'To',
-                  false,
-                  translatorProvider.languages,
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildLanguageButton(
-    BuildContext context,
+  void _showConversationLanguagePicker(
     ConversationProvider conversationProvider,
     TranslatorProvider translatorProvider,
-    String langCode,
-    String label,
-    bool isFrom,
-    List<Map<String, String>> languages,
+    bool isUserA,
   ) {
-    Map<String, String> language;
-    
-    try {
-      language = languages.firstWhere(
-        (lang) => lang['value'] == langCode,
-      );
-    } catch (e) {
-      language = {
-        'label': 'Unknown', 
-        'value': langCode, 
-        'flag': 'GB'
-      };
-    }
-
-    return GestureDetector(
-      onTap: () => _showLanguagePicker(context, conversationProvider, translatorProvider, isFrom),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.grey.shade50,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade200),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: Colors.grey.shade600,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Row(
-              children: [
-                Flag.fromString(
-                  language['flag']!,
-                  height: 20,
-                  width: 28,
-                  borderRadius: 4,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    language['label']!,
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey.shade800,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                Icon(
-                  Icons.keyboard_arrow_down_rounded,
-                  color: Colors.grey.shade500,
-                  size: 20,
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showLanguagePicker(BuildContext context, ConversationProvider conversationProvider, TranslatorProvider translatorProvider, bool isFrom) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -427,7 +266,190 @@ class ConversationLanguageSelector extends StatelessWidget {
       builder: (context) => _ConversationLanguagePickerModal(
         conversationProvider: conversationProvider,
         translatorProvider: translatorProvider,
-        isFrom: isFrom,
+        isUserA: isUserA,
+      ),
+    );
+  }
+
+  Widget _buildStatusIndicator(bool isListening, Color accentColor, bool isUserA) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: isListening ? accentColor : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: accentColor,
+          width: 1.5,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              color: isListening ? Colors.white : accentColor,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            isListening ? 'Listening...' : 'Tap to speak',
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: isListening ? Colors.white : accentColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSplitChatBubble(ChatMessage message, Color accentColor, bool isUserA, ConversationProvider conversationProvider) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Original Text (User's own text - normal orientation)
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: accentColor,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: accentColor.withOpacity(0.2),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Text(
+              message.originalText,
+              style: GoogleFonts.poppins(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: Colors.white,
+                height: 1.4,
+              ),
+            ),
+          ),
+          
+          if (message.translatedText.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            
+            // Translated Text (For other user - mirrored if needed)
+            Transform.rotate(
+              angle: isUserA ? 3.14159 : 0, // Mirror for User A
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: accentColor.withOpacity(0.3),
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        message.translatedText,
+                        style: GoogleFonts.poppins(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                          color: const Color(0xFF374151),
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: () {
+                        conversationProvider.speakText(
+                          message.translatedText,
+                          message.targetLanguage,
+                        );
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: accentColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          Icons.volume_up_rounded,
+                          size: 16,
+                          color: accentColor,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFloatingMicButton(
+    ConversationProvider conversationProvider,
+    bool isUserA,
+    Color accentColor,
+    bool isListening,
+  ) {
+    return GestureDetector(
+      onTap: () => conversationProvider.toggleListening(isUserA),
+      child: Container(
+        width: 64,
+        height: 64,
+        decoration: BoxDecoration(
+          color: isListening ? accentColor : Colors.white,
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: accentColor,
+            width: 3,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: accentColor.withOpacity(isListening ? 0.4 : 0.2),
+              blurRadius: 16,
+              spreadRadius: isListening ? 4 : 0,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Icon(
+          isListening ? Icons.mic : Icons.mic_none_rounded,
+          color: isListening ? Colors.white : accentColor,
+          size: 28,
+        ),
+      ),
+    );
+  }
+
+  void _showConversationHistory(BuildContext context, ConversationProvider conversationProvider) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      useSafeArea: false,
+      enableDrag: true,
+      builder: (context) => _ConversationHistoryModal(
+        conversationProvider: conversationProvider,
       ),
     );
   }
@@ -436,12 +458,12 @@ class ConversationLanguageSelector extends StatelessWidget {
 class _ConversationLanguagePickerModal extends StatefulWidget {
   final ConversationProvider conversationProvider;
   final TranslatorProvider translatorProvider;
-  final bool isFrom;
+  final bool isUserA;
 
   const _ConversationLanguagePickerModal({
     required this.conversationProvider,
     required this.translatorProvider,
-    required this.isFrom,
+    required this.isUserA,
   });
 
   @override
@@ -488,7 +510,7 @@ class _ConversationLanguagePickerModalState extends State<_ConversationLanguageP
             child: Row(
               children: [
                 Text(
-                  widget.isFrom ? 'Select source language' : 'Select target language',
+                  'Select ${widget.isUserA ? "User A" : "User B"} language',
                   style: GoogleFonts.poppins(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
@@ -560,11 +582,14 @@ class _ConversationLanguagePickerModalState extends State<_ConversationLanguageP
               itemCount: filteredLanguages.length,
               itemBuilder: (context, index) {
                 final language = filteredLanguages[index];
-                final isSelected = (widget.isFrom ? widget.conversationProvider.language1 : widget.conversationProvider.language2) == language['value'];
+                final currentLanguage = widget.isUserA 
+                    ? widget.conversationProvider.language1 
+                    : widget.conversationProvider.language2;
+                final isSelected = currentLanguage == language['value'];
                 
                 return GestureDetector(
                   onTap: () {
-                    if (widget.isFrom) {
+                    if (widget.isUserA) {
                       widget.conversationProvider.setLanguage1(
                         language['value']!,
                         language['label']!,
@@ -627,3 +652,345 @@ class _ConversationLanguagePickerModalState extends State<_ConversationLanguageP
     );
   }
 }
+
+class _ConversationHistoryModal extends StatefulWidget {
+  final ConversationProvider conversationProvider;
+
+  const _ConversationHistoryModal({
+    required this.conversationProvider,
+  });
+
+  @override
+  State<_ConversationHistoryModal> createState() => _ConversationHistoryModalState();
+}
+
+class _ConversationHistoryModalState extends State<_ConversationHistoryModal> {
+  @override
+  Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    
+    return Container(
+      height: screenHeight * 0.8,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
+        children: [
+          // Handle
+          Container(
+            margin: const EdgeInsets.only(top: 12),
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade300,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          
+          // Header
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.chat_bubble_outline_rounded,
+                    color: Colors.blue.shade600,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Conversation History',
+                  style: GoogleFonts.poppins(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.grey.shade800,
+                  ),
+                ),
+                const Spacer(),
+                // Clear conversation button
+                if (widget.conversationProvider.chatMessages.isNotEmpty) ...[
+                  GestureDetector(
+                    onTap: () {
+                      _showClearConversationDialog();
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        Icons.delete_sweep_rounded,
+                        color: Colors.red.shade600,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.close_rounded,
+                      color: Colors.grey.shade600,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          // Conversation Messages
+          Expanded(
+            child: Consumer<ConversationProvider>(
+              builder: (context, provider, child) {
+                if (provider.chatMessages.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade50,
+                            borderRadius: BorderRadius.circular(40),
+                            border: Border.all(color: Colors.grey.shade200, width: 2),
+                          ),
+                          child: Icon(
+                            Icons.chat_bubble_outline,
+                            size: 40,
+                            color: Colors.grey.shade400,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No conversations yet',
+                          style: GoogleFonts.poppins(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey.shade700,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Start a conversation to see messages here',
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            color: Colors.grey.shade500,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                return ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  reverse: true,
+                  itemCount: provider.chatMessages.length,
+                  itemBuilder: (context, index) {
+                    final message = provider.chatMessages[provider.chatMessages.length - 1 - index];
+                    final isFromLeft = message.isFromLeftMic;
+                    final messageColor = isFromLeft ? const Color(0xFFEF4444) : const Color(0xFF3B82F6);
+                    
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // User indicator
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: messageColor.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: messageColor.withOpacity(0.3),
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: BoxDecoration(
+                                    color: messageColor,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  isFromLeft ? 'User A' : 'User B',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: messageColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          
+                          const SizedBox(height: 8),
+                          
+                          // Message bubble
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade50,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: Colors.grey.shade200),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Original text
+                                Text(
+                                  message.originalText,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.grey.shade800,
+                                  ),
+                                ),
+                                
+                                if (message.translatedText.isNotEmpty) ...[
+                                  const SizedBox(height: 8),
+                                  
+                                  // Translated text
+                                  Text(
+                                    message.translatedText,
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 14,
+                                      color: Colors.blue.shade700,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                                
+                                const SizedBox(height: 8),
+                                
+                                // Language indicator and timestamp
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: messageColor.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Text(
+                                        '${message.sourceLanguage} → ${message.targetLanguage}',
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 10,
+                                          color: messageColor,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                    Text(
+                                      _formatTime(message.timestamp),
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 11,
+                                        color: Colors.grey.shade500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+          
+          // Bottom padding for safe area
+          SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
+        ],
+      ),
+    );
+  }
+
+  void _showClearConversationDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            'Clear Conversation',
+            style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+          ),
+          content: Text(
+            'Are you sure you want to clear the entire conversation history? This action cannot be undone.',
+            style: GoogleFonts.poppins(),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                'Cancel',
+                style: GoogleFonts.poppins(),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                widget.conversationProvider.clearConversation();
+                Navigator.of(context).pop();
+                Navigator.of(context).pop(); // Close the history modal too
+              },
+              child: Text(
+                'Clear',
+                style: GoogleFonts.poppins(
+                  color: Colors.red,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  String _formatTime(DateTime timestamp) {
+    final now = DateTime.now();
+    final difference = now.difference(timestamp);
+
+    if (difference.inMinutes < 1) {
+      return 'Now';
+    } else if (difference.inHours < 1) {
+      return '${difference.inMinutes}m ago';
+    } else if (difference.inDays < 1) {
+      return '${difference.inHours}h ago';
+    } else {
+      return '${difference.inDays}d ago';
+    }
+  }
+}
+

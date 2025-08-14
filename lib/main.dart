@@ -10,6 +10,7 @@ import 'screens/books_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/conversation_screen.dart';
 import 'screens/real_time_conversation_screen.dart';
+import 'screens/upload_screen.dart';
 import 'providers/translator_provider.dart';
 import 'services/supabase_client.dart';
 import 'services/auth_service.dart';
@@ -177,6 +178,8 @@ class VoicelyApp extends StatelessWidget {
           ),
           routes: {
             '/settings': (context) => const SettingsScreen(),
+            '/conversation': (context) => const ConversationScreen(),
+            '/camera': (context) => const CameraScreen(),
           },
           localeResolutionCallback: (locale, supportedLocales) {
             for (var supportedLocale in supportedLocales) {
@@ -216,8 +219,8 @@ class _MainScreenState extends State<MainScreen> {
     const AIHomepage(),
     const ConversationScreen(),
     const CameraScreen(),
+    const UploadScreen(),
     const BooksScreen(),
-    const HistoryScreen(),
     const FavoritesScreen(),
   ];
 
@@ -260,12 +263,12 @@ class _MainScreenState extends State<MainScreen> {
             label: translatorProvider.getLocalizedText('camera'),
           ),
           BottomNavigationBarItem(
-            icon: const Icon(Icons.menu_book),
-            label: 'Books',
+            icon: const Icon(Icons.upload_file),
+            label: 'Upload',
           ),
           BottomNavigationBarItem(
-            icon: const Icon(Icons.history),
-            label: translatorProvider.getLocalizedText('history'),
+            icon: const Icon(Icons.menu_book),
+            label: 'Books',
           ),
           BottomNavigationBarItem(
             icon: const Icon(Icons.favorite),
@@ -284,8 +287,8 @@ class _MainScreenWithIndexState extends State<MainScreenWithIndex> {
     const AIHomepage(),
     const ConversationScreen(),
     const CameraScreen(),
+    const UploadScreen(),
     const BooksScreen(),
-    const HistoryScreen(),
     const FavoritesScreen(),
   ];
 
@@ -334,12 +337,12 @@ class _MainScreenWithIndexState extends State<MainScreenWithIndex> {
             label: translatorProvider.getLocalizedText('camera'),
           ),
           BottomNavigationBarItem(
-            icon: const Icon(Icons.menu_book),
-            label: 'Books',
+            icon: const Icon(Icons.upload_file),
+            label: 'Upload',
           ),
           BottomNavigationBarItem(
-            icon: const Icon(Icons.history),
-            label: translatorProvider.getLocalizedText('history'),
+            icon: const Icon(Icons.menu_book),
+            label: 'Books',
           ),
           BottomNavigationBarItem(
             icon: const Icon(Icons.favorite),

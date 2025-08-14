@@ -36,8 +36,8 @@ class _CameraScreenState extends State<CameraScreen> {
       backgroundColor: Colors.grey[50],
       drawer: const AppDrawer(),
       appBar: AppBar(
-                 title: Text(
-           context.read<TranslatorProvider>().getLocalizedText('camera_translation'),
+        title: Text(
+          context.read<TranslatorProvider>().getLocalizedText('camera_translation'),
           style: GoogleFonts.poppins(
             fontWeight: FontWeight.bold,
           ),
@@ -46,6 +46,23 @@ class _CameraScreenState extends State<CameraScreen> {
         foregroundColor: Colors.black87,
         elevation: 0,
         centerTitle: true,
+        actions: [
+          // OCR History Button
+          Container(
+            margin: const EdgeInsets.only(right: 8),
+            child: IconButton(
+              onPressed: () {
+                _showOCRHistory(context);
+              },
+              icon: Icon(
+                Icons.image_search_rounded,
+                color: Colors.grey.shade700,
+                size: 28,
+              ),
+              tooltip: 'OCR History',
+            ),
+          ),
+        ],
       ),
       body: Consumer<TranslatorProvider>(
         builder: (context, provider, child) {
@@ -935,5 +952,353 @@ class _CameraScreenState extends State<CameraScreen> {
         ),
       ],
     );
+  }
+
+  void _showOCRHistory(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      useSafeArea: false,
+      enableDrag: true,
+      builder: (context) => _OCRHistoryModal(),
+    );
+  }
+}
+
+class _OCRHistoryModal extends StatefulWidget {
+  @override
+  State<_OCRHistoryModal> createState() => _OCRHistoryModalState();
+}
+
+class _OCRHistoryModalState extends State<_OCRHistoryModal> {
+  // Mock OCR history data - in a real app, this would come from a provider or database
+  final List<Map<String, dynamic>> _ocrHistory = [
+    {
+      'id': '1',
+      'recognizedText': 'Hello World',
+      'translatedText': 'Merhaba Dünya',
+      'sourceLanguage': 'en',
+      'targetLanguage': 'tr',
+      'timestamp': DateTime.now().subtract(Duration(minutes: 5)),
+      'imagePath': null,
+    },
+    {
+      'id': '2',
+      'recognizedText': 'Welcome to our restaurant',
+      'translatedText': 'Restaurantımıza hoş geldiniz',
+      'sourceLanguage': 'en',
+      'targetLanguage': 'tr',
+      'timestamp': DateTime.now().subtract(Duration(hours: 2)),
+      'imagePath': null,
+    },
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    
+    return Container(
+      height: screenHeight * 0.8,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
+        children: [
+          // Handle
+          Container(
+            margin: const EdgeInsets.only(top: 12),
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade300,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          
+          // Header
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.image_search_rounded,
+                    color: Colors.orange.shade600,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'OCR Translation History',
+                  style: GoogleFonts.poppins(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.grey.shade800,
+                  ),
+                ),
+                const Spacer(),
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.close_rounded,
+                      color: Colors.grey.shade600,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          // History List
+          Expanded(
+            child: _ocrHistory.isEmpty 
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          color: Colors.orange.shade50,
+                          borderRadius: BorderRadius.circular(40),
+                          border: Border.all(color: Colors.orange.shade200, width: 2),
+                        ),
+                        child: Icon(
+                          Icons.image_search,
+                          size: 40,
+                          color: Colors.orange.shade400,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'No OCR translations yet',
+                        style: GoogleFonts.poppins(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Translate images to see your OCR history here',
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          color: Colors.grey.shade500,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  itemCount: _ocrHistory.length,
+                  itemBuilder: (context, index) {
+                    final item = _ocrHistory[index];
+                    
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade50,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.grey.shade200),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Header with OCR indicator
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.orange.shade100,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.camera_alt,
+                                        color: Colors.orange.shade600,
+                                        size: 14,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'OCR',
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 11,
+                                          color: Colors.orange.shade600,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const Spacer(),
+                                Text(
+                                  _formatTime(item['timestamp']),
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 11,
+                                    color: Colors.grey.shade500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            
+                            const SizedBox(height: 12),
+                            
+                            // Recognized text
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: Colors.grey.shade300),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.text_fields_rounded,
+                                        color: Colors.grey.shade600,
+                                        size: 16,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        'Recognized Text',
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 12,
+                                          color: Colors.grey.shade600,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    item['recognizedText'],
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 14,
+                                      color: Colors.grey.shade800,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            
+                            const SizedBox(height: 8),
+                            
+                            // Translated text
+                            if (item['translatedText'].isNotEmpty)
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.shade50,
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: Colors.blue.shade200),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.translate_rounded,
+                                          color: Colors.blue.shade600,
+                                          size: 16,
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          'Translation',
+                                          style: GoogleFonts.poppins(
+                                            fontSize: 12,
+                                            color: Colors.blue.shade600,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      item['translatedText'],
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 14,
+                                        color: Colors.blue.shade700,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            
+                            const SizedBox(height: 8),
+                            
+                            // Language indicator
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade100,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                '${item['sourceLanguage'].toUpperCase()} → ${item['targetLanguage'].toUpperCase()}',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 10,
+                                  color: Colors.grey.shade600,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+          ),
+          
+          // Bottom padding for safe area
+          SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
+        ],
+      ),
+    );
+  }
+
+  String _formatTime(DateTime timestamp) {
+    final now = DateTime.now();
+    final difference = now.difference(timestamp);
+
+    if (difference.inMinutes < 1) {
+      return 'Now';
+    } else if (difference.inHours < 1) {
+      return '${difference.inMinutes}m ago';
+    } else if (difference.inDays < 1) {
+      return '${difference.inHours}h ago';
+    } else {
+      return '${difference.inDays}d ago';
+    }
   }
 } 

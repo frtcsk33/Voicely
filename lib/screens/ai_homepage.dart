@@ -148,6 +148,21 @@ class _AIHomepageState extends State<AIHomepage>
           ),
         ),
         actions: [
+          // Translation History Button
+          Container(
+            margin: const EdgeInsets.only(right: 8),
+            child: IconButton(
+              onPressed: () {
+                _showTranslationHistory(context);
+              },
+              icon: Icon(
+                Icons.history_rounded,
+                color: Colors.grey.shade700,
+                size: 28,
+              ),
+              tooltip: 'Translation History',
+            ),
+          ),
           Container(
             margin: const EdgeInsets.only(right: 16),
             child: Icon(
@@ -189,7 +204,9 @@ class _AIHomepageState extends State<AIHomepage>
                     // Language Selector
                     const LanguageSelector(),
                     
-                    SizedBox(height: screenHeight * 0.03),
+                    SizedBox(height: screenHeight * 0.02),
+                    
+                    SizedBox(height: screenHeight * 0.01),
                     
                     // Main Translation Interface
                     _buildTranslationInterface(context, screenWidth, screenHeight, translatorProvider),
@@ -987,6 +1004,258 @@ class _AIHomepageState extends State<AIHomepage>
           },
         ),
       );
+    }
+  }
+
+  void _showTranslationHistory(BuildContext context) {
+    final translatorProvider = context.read<TranslatorProvider>();
+    
+    // Load history if not already loaded
+    translatorProvider.loadHistory();
+    
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      useSafeArea: false,
+      enableDrag: true,
+      builder: (context) => _TranslationHistoryModal(
+        translatorProvider: translatorProvider,
+      ),
+    );
+  }
+
+}
+
+class _TranslationHistoryModal extends StatefulWidget {
+  final TranslatorProvider translatorProvider;
+
+  const _TranslationHistoryModal({
+    required this.translatorProvider,
+  });
+
+  @override
+  State<_TranslationHistoryModal> createState() => _TranslationHistoryModalState();
+}
+
+class _TranslationHistoryModalState extends State<_TranslationHistoryModal> {
+  @override
+  Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final topPadding = MediaQuery.of(context).padding.top;
+    
+    return Container(
+      height: screenHeight * 0.8,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
+        children: [
+          // Handle
+          Container(
+            margin: const EdgeInsets.only(top: 12),
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade300,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          
+          // Header
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.history_rounded,
+                  color: Colors.blue.shade600,
+                  size: 24,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Translation History',
+                  style: GoogleFonts.poppins(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.grey.shade800,
+                  ),
+                ),
+                const Spacer(),
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.close_rounded,
+                      color: Colors.grey.shade600,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          // History List
+          Expanded(
+            child: Consumer<TranslatorProvider>(
+              builder: (context, provider, child) {
+                if (provider.history.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            color: Colors.blue.shade50,
+                            borderRadius: BorderRadius.circular(40),
+                            border: Border.all(color: Colors.blue.shade200, width: 2),
+                          ),
+                          child: Icon(
+                            Icons.history,
+                            size: 40,
+                            color: Colors.blue.shade400,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No translations yet',
+                          style: GoogleFonts.poppins(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey.shade700,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Your translation history will appear here',
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            color: Colors.grey.shade500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                return ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  itemCount: provider.history.length,
+                  itemBuilder: (context, index) {
+                    final historyItem = provider.history[index];
+                    final fromLang = provider.languages.firstWhere(
+                      (lang) => lang['value'] == historyItem['fromLang'],
+                      orElse: () => {'label': historyItem['fromLang']},
+                    )['label'];
+                    final toLang = provider.languages.firstWhere(
+                      (lang) => lang['value'] == historyItem['toLang'],
+                      orElse: () => {'label': historyItem['toLang']},
+                    )['label'];
+
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey.shade200),
+                      ),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.all(16),
+                        title: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              historyItem['inputText'],
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 15,
+                                color: Colors.grey.shade800,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              historyItem['translatedText'],
+                              style: GoogleFonts.poppins(
+                                color: Colors.blue.shade700,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.blue.shade50,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    '$fromLang → $toLang',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 11,
+                                      color: Colors.blue.shade600,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                                const Spacer(),
+                                Text(
+                                  _formatTimestamp(historyItem['timestamp']),
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 11,
+                                    color: Colors.grey.shade500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        onTap: () {
+                          provider.loadFromHistory(historyItem);
+                          Navigator.pop(context);
+                        },
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+          
+          // Bottom padding for safe area
+          SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
+        ],
+      ),
+    );
+  }
+
+  String _formatTimestamp(String timestamp) {
+    try {
+      final date = DateTime.parse(timestamp);
+      final now = DateTime.now();
+      final difference = now.difference(date);
+
+      if (difference.inDays > 0) {
+        return '${difference.inDays} gün önce';
+      } else if (difference.inHours > 0) {
+        return '${difference.inHours} saat önce';
+      } else if (difference.inMinutes > 0) {
+        return '${difference.inMinutes} dakika önce';
+      } else {
+        return 'Az önce';
+      }
+    } catch (e) {
+      return 'Bilinmeyen';
     }
   }
 }

@@ -6,7 +6,7 @@ class ApiConfig {
   static const String _developmentUrl = 'http://192.168.1.8:3001';
   
   // Production URL - Update when you deploy backend
-  static const String _productionUrl = 'https://voicely-translation-api.herokuapp.com';
+  static const String _productionUrl = 'https://voicely-f460015f0b32.herokuapp.com';
   
   /// Get the appropriate base URL based on environment
   static String get baseUrl {
