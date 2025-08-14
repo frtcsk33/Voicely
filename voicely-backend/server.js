@@ -403,6 +403,16 @@ process.on('SIGINT', () => {
     process.exit(0);
 });
 
+
+app.set('trust proxy', 1); // Heroku için gerekli
+
+// rate limit middleware tanımı buraya gelir
+
+app.get('/', (req, res) => {
+    res.send('Voicely Backend is running 🚀');
+  });
+  
+
 // Server Başlat
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {

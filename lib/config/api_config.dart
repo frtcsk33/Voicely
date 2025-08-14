@@ -3,7 +3,7 @@ class ApiConfig {
   static const bool _isProduction = bool.fromEnvironment('dart.vm.product');
   
   // Development IP - Update this with your local IP
-  static const String _developmentUrl = 'http://192.168.1.8:3000';
+  static const String _developmentUrl = 'http://192.168.1.8:3001';
   
   // Production URL - Update when you deploy backend
   static const String _productionUrl = 'https://voicely-translation-api.herokuapp.com';
